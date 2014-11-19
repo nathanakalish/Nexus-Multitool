@@ -34,7 +34,7 @@ f_deviceselect(){
     6) f_n712select; f_setup; f_menu;;
     7) f_n713select; f_setup; f_menu;;
     8) currentdevice=mantaray; f_setup; f_menu;;
-    9) currentdevice=vloantis; f_setup; f_menu;;
+    9) currentdevice=volantis; f_setup; f_menu;;
     10) currentdevice=tungsten; f_setup; f_menu;;
     11) currentdevice=fugu; f_setup; f_menu;;
     S|s) f_setup; f_options; f_menu;;
@@ -418,8 +418,9 @@ f_restore(){
       read -p "Press [Enter] to return to the menu." null
       f_menu;;
   esac
+
   echo "Downloading restore image."
-  curl $devicedir/recovery.tgz $url --progress-bar
+  curl -o $devicedir/restore.tgz $url --progress-bar
   clear
   echo "Reboot your device to the bootloader."
   echo ""
@@ -431,11 +432,55 @@ f_restore(){
   cd $devicedir/$restoredir
   clear
   echo "Flashing restore image."
+  sed 's/fastboot/$fastboot/g' ./flash-all.sh
   sh ./flash-all.sh
   clear
-  echo "Flashing complete."
+  unzip image-$restoredir.zip
+  $fastboot format userdata
+  clear
+  $fastboot format cache
+  clear
+  if [ -e ./boot.img ]; then
+    $fastboot flash boot boot.img
+  else
+    echo "boot.img not found. Skipping."
+  fi
+  clear
+  if [ -e ./recovery.img ]; then
+    $fastboot flash recovery recovery.img
+  else
+    echo "recovery.img not found. Skipping."
+  fi
+  clear
+  if [ -e ./system.img ]; then
+    $fastboot flash system system.img
+  else
+    echo "system.img not found. Skipping."
+  fi
+  clear
+  if [ -e ./userdata.img ]; then
+    $fastboot flash userdata userdata.img
+  else
+    echo "userdata.img not found. Skipping."
+  fi
+  clear
+  if [ -e ./cache.img ]; then
+    $fastboot flash cache cache.img
+  else
+    echo "cache.img not found. Skipping."
+  fi
+  clear
+  if [ -e ./vendor.img ]; then
+    $fastboot flash vendor vendor.img
+  else
+    echo "vendor.img not found. Skipping."
+  fi
+
+  $fastboot reboot
   rm -rf $restoredir
   cd ~/
+  clear
+  echo "Flashing complete."
   echo ""
   read -p "Press [Enter] to return to the menu" null
   f_menu
