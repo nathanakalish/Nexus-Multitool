@@ -1,8 +1,9 @@
 #!/bin/bash
 
 #Version
-nmtver="0.4"
+nmtver="0.5"
 
+################## Sets up ADB and and directories ###
 f_setup(){
   clear
   maindir=~/Nexus-Multitool
@@ -75,6 +76,7 @@ f_setup(){
   clear
 }
 
+######################### Detects connected device ###
 f_autodevice(){
   clear
   $adb start-server
@@ -97,11 +99,13 @@ f_autodevice(){
   currentdevice=`$adb shell getprop ro.product.name`
   androidver=`$adb shell getprop ro.build.version.release`
   androidbuild=`$adb shell getprop ro.build.id`
+  serialno=`$adb shell getprop ro.serialno`
   androidver=$(echo $androidver|tr -d '\r\n')
   androidbuild=$(echo $androidbuild|tr -d '\r\n')
   devicemake=$(echo $devicemake|tr -d '\r\n')
   devicemodel=$(echo $devicemodel|tr -d '\r\n')
   currentdevice=$(echo $currentdevice|tr -d '\r\n')
+  serialno=$(echo $serialno|tr -d '\r\n')
 
   clear
   case $currentdevice in
@@ -123,18 +127,21 @@ f_autodevice(){
   f_menu
 }
 
+######################################## Main Menu ###
 f_menu(){
   clear
   echo "Nexus Multitool - Version $nmtver"
-  echo "Connected Device: $devicemake $devicemodel ($currentdevice)"
+  echo "Connected Device: $devicemake $devicemodel ($currentdevice) ($serialno)"
   echo "Android Version: $androidver ($androidbuild)"
   echo ""
   echo "[1] Unlock Bootloader"
   echo "[2] Lock Bootloader"
   echo "[3] Root (Requires Unlocked Bootloader)"
   echo "[4] Install TWRP Recovery (Requires Unlocked Bootloader)"
-  echo "[5] Restore to Stock (Requires Unlocked Bootloader)"
-  echo "[6] Tools"
+  echo "[5] TWRP Tools (Requires TWRP)"
+  echo "[6] Flash Files (Requires Unlocked Bootloader)"
+  echo "[7] Restore to Stock (Requires Unlocked Bootloader)"
+  echo "[8] ADB Tools"
   echo ""
   echo "[S] Settings and Options."
   echo "[D] Go back and select a different device."
@@ -147,8 +154,10 @@ f_menu(){
     2) f_lock; f_menu;;
     3) f_root; f_menu;;
     4) f_twrp; f_menu;;
-    5) f_restore; f_menu;;
-    6) f_tools; f_menu;;
+    5) f_twrptools; f_menu;;
+    6) f_flash; f_menu;;
+    7) f_restore; f_menu;;
+    8) f_tools; f_menu;;
     S|s) f_options;;
     D|d) f_autodevice;;
     Q|q) clear; exit;;
@@ -156,6 +165,7 @@ f_menu(){
   esac
 }
 
+########################### Unlocks the bootloader ###
 f_unlock(){
   clear
   case $currentdevice in
@@ -166,13 +176,11 @@ f_unlock(){
       echo "and enable 'OEM unlock'."
       echo ""
       read -p "Press [Enter] to continue." null
-      clear
-      echo "Waiting for device..."
-      $adb wait-for-device
       clear;;
     *)
       clear;;
   esac
+
   echo "THIS NEXT STEP WILL ERASE YOUR DEVICE'S DATA."
   echo "Make sure taht anything you wish to keep is backed"
   echo "up and taken off of the device!"
@@ -192,16 +200,25 @@ f_unlock(){
   read -p "Press [Enter] to return to the menu" null
 }
 
+############################# Locks the bootloader ###
 f_lock(){
   clear
-  echo "Start up your device in the bootloader OR start the device normally and make sure ADB is enabled."
+  echo "Are you sure you would like to lock the bootloader? To unlock again means you need to erase your"
+  echo "data."
   echo ""
-  read -p "Press [Enter] to continue."
+  read -p "Press [Enter] to continue, or [M] to return to the menu." selection
+
+  case $selection in
+    M|m) f_menu;;
+    *) clear;;
+  esac
+
   $adb reboot bootloader
   clear
   $adb oem lock
 }
 
+################################# Roots the device ###
 f_root(){
   clear
   case $currentdevice in
@@ -249,6 +266,7 @@ f_root(){
   esac
 }
 
+#################################### Installs TWRP ###
 f_twrp(){
   clear
   case $currentdevice in
@@ -286,6 +304,266 @@ f_twrp(){
   f_menu
 }
 
+####################################### TWRP stuff ###
+f_twrptools(){
+  clear
+  echo "Nexus Multitool - Version $nmtver"
+  echo "Connected Device: $devicemake $devicemodel ($currentdevice) ($serialno)"
+  echo "Android Version: $androidver ($androidbuild)"
+  echo ""
+  echo "[1] Back Up device and copy to computer"
+  echo "[2] Restore device from backup on computer"
+  echo ""
+  echo "[M] Return to the Menu"
+  echo "[Q] Quit"
+  echo ""
+  read -p "Selection: " selection
+
+  case $selection in
+    1)
+      clear
+      echo "What partitions do you want to back up? Type any that apply."
+      echo ""
+      echo "S = System"
+      echo "D = Data"
+      echo "C = Cache"
+      echo "R = Recovery"
+      echo "B = Boot"
+      echo "A = Android secure"
+      echo "E = SD-Ext"
+      echo ""
+      echo "O = Use Compression"
+      echo "M = Don't create MD5"
+      echo ""
+      read -p "Back up: " partitions
+      clear
+      partitions=$(echo $partitions | tr 'a-z' 'A-Z')
+      partitions=$(echo $partitions | tr -d ' ')
+      clear
+      echo "What do you want the backup to be named?"
+      echo ""
+      read -p "Name: " backupname
+      clear
+      echo "Starting backup. Please wait."
+      $adb reboot recovery
+      sleep 20
+      $adb shell "echo -e 'backup $partitions $backupname\nreboot recovery\n' > /cache/recovery/openrecoveryscript"
+      $adb reboot recovery
+      clear
+      read -p "Press [Enter] when the backup is complete and the device is back in recovery." null
+      clear
+      echo "Pulling Backup off the device"
+      echo ""
+      $adb pull /sdcard/TWRP/BACKUPS/$serialno/$backupname/ $devicedir/backups/$serialno/$backupname
+      $adb shell rm -rf /sdcard/TWRP/BACKUPS/$serialno/$backupname
+      $adb reboot
+      clear
+      echo "Backup complete! Backup located at:"
+      echo "$devicedir/Backups/$backupname"
+      echo ""
+      read -p "Press [Enter] To return to the menu." null
+      f_twrptools;;
+    2)
+      clear
+      ls $devicedir/backups/$serialno
+      echo ""
+      echo "Enter the name of the backup that you want to restore."
+      echo ""
+      read -p "Backup: " backupname
+      if [ -d $devicedir/backups/$serialno/$backupname ]; then
+        clear
+      else
+        clear
+        echo "That backup doesn't exist! Returning to menu."
+        sleep 3
+        f_twrptools
+      fi
+
+      clear
+      echo "What partitions do you want to restore from the backup? Type any that apply."
+      echo ""
+      echo "S = System"
+      echo "D = Data"
+      echo "C = Cache"
+      echo "R = Recovery"
+      echo "B = Boot"
+      echo "A = Android secure"
+      echo "E = SD-Ext"
+      echo ""
+      read -p "Back up: " partitions
+      clear
+      partitions=$(echo $partitions | tr 'a-z' 'A-Z')
+      partitions=$(echo $partitions | tr -d ' ')
+
+      $adb reboot recovery
+      sleep 20
+
+      clear
+      echo "Pushing backup to device."
+      echo ""
+      $adb shell "echo -e 'restore $backupname $partitions\nreboot recovery\n' > /cache/recovery/openrecoveryscript"
+      $adb push $devicedir/backups/$serialno/$backupname /sdcard/TWRP/BACKUPS/$serialno/$backupname
+      $adb reboot recovery
+      clear
+      read -p "Press [Enter] when the restore is complete and the device is back in recovery." null
+      clear
+      $adb shell rm -rf /sdcard/TWRP/BACKUPS/$serialno/$backupname
+      $adb reboot
+      clear
+      echo "Restore complete."
+      echo ""
+      read -p "Press [Enter] to return to the menu."
+      clear
+      f_twrptools;;
+    M|m) f_menu;;
+    Q|q) clear; exit;;
+  esac
+}
+
+####################### Flashes a variety of files ###
+f_flash(){
+  clear
+  echo "Nexus Multitool - Version $nmtver"
+  echo "Connected Device: $devicemake $devicemodel ($currentdevice) ($serialno)"
+  echo "Android Version: $androidver ($androidbuild)"
+  echo ""
+  echo "[1] Flash zip in recovery (Requires TWRP)"
+  echo "[2] Custom recovery (IMG)"
+  echo "[3] Custom Kernel (IMG)"
+  echo "[4] Custom Cache (IMG)"
+  echo "[5] Custom System (IMG)"
+  echo "[6] Custom Userdata (IMG)"
+  echo ""
+  echo "[M] Return to Main Menu."
+  echo "[Q] Quit."
+  echo ""
+  read -p "Selection: " selection
+
+  case $selection in
+    1)
+      clear
+      echo "Either type the path or click and drag the file into this window that you want to flash."
+      echo ""
+      read -p "" ziptoflash
+      clear
+      echo "Please wait while the zip is copied and flashed. Your device will start nomally once finished."
+      $adb reboot recovery
+      $adb wait-for-device
+      $adb push $ziptoflash /sdcard/tmp/ziptoflash.zip
+      $adb shell "echo -e 'install /sdcard/tmp/ziptoflash.zip\ncmd rm -rf /sdcard/tmp\ncmd reboot\n' > /cache/recovery/openrecoveryscript"
+      $adb reboot recovery
+      clear
+      echo "Flashing complete."
+      echo ""
+      read -p "Press [Enter] to return to the menu." null
+      clear
+      f_flash;;
+    2)
+      clear
+      echo "Would you like to permanently flash the file, or temporarily?"
+      echo ""
+      echo "[1] Premanently"
+      echo "[2] Temporarily"
+      echo ""
+      read -p "Selection: " selection
+      clear
+      echo "Either type the path or click and drag the file into this window that you want to flash."
+      echo ""
+      read -p "" imgtoflash
+      clear
+      echo "Please wait while the image is flashed."
+      $adb reboot bootloader
+
+      case $selection in
+        1) $fastboot flash recovery $imgtoflash;;
+        2) $fastboot boot $imgtoflash;;
+      esac
+
+      clear
+      echo "Flashing complete."
+      echo ""
+      read -p "Press [Enter] to return to the menu." null
+      clear
+      f_flash;;
+    3)
+      clear
+      echo "Would you like to permanently flash the file, or temporarily?"
+      echo ""
+      echo "[1] Premanently"
+      echo "[2] Temporarily"
+      echo ""
+      read -p "Selection: " selection
+      clear
+      echo "Either type the path or click and drag the file into this window that you want to flash."
+      echo ""
+      read -p "" imgtoflash
+      clear
+      echo "Please wait while the image is flashed."
+      $adb reboot bootloader
+
+      case $selection in
+        1) $fastboot flash boot $imgtoflash;;
+        2) $fastboot boot $imgtoflash;;
+      esac
+
+      clear
+      echo "Flashing complete."
+      echo ""
+      read -p "Press [Enter] to return to the menu." null
+      clear
+      f_flash;;
+    4)
+      clear
+      echo "Either type the path or click and drag the file into this window that you want to flash."
+      echo ""
+      read -p "" imgtoflash
+      clear
+      echo "Please wait while the image is flashed."
+      $adb reboot bootloader
+      $fastboot flash cache $imgtoflash
+      clear
+      echo "Flashing complete."
+      echo ""
+      read -p "Press [Enter] to return to the menu." null
+      clear
+      f_flash;;
+    5)
+      clear
+      echo "Either type the path or click and drag the file into this window that you want to flash."
+      echo ""
+      read -p "" imgtoflash
+      clear
+      echo "Please wait while the image is flashed."
+      $adb reboot bootloader
+      $fastboot flash system $imgtoflash
+      clear
+      echo "Flashing complete."
+      echo ""
+      read -p "Press [Enter] to return to the menu." null
+      clear
+      f_flash;;
+    6)
+      clear
+      echo "Either type the path or click and drag the file into this window that you want to flash."
+      echo ""
+      read -p "" imgtoflash
+      clear
+      echo "Please wait while the image is flashed."
+      $adb reboot bootloader
+      $fastboot flash userdata $imgtoflash
+      clear
+      echo "Flashing complete."
+      echo ""
+      read -p "Press [Enter] to return to the menu." null
+      clear
+      f_flash;;
+    M|m) f_menu;;
+    Q|q) clear; exit;;
+  esac
+
+}
+
+########################## Restore device to stock ###
 f_restore(){
   clear
   echo "Are you sure you want to restore your device? This will erase ALL data!"
@@ -441,11 +719,12 @@ f_restore(){
   f_autodevice
 }
 
+######################################## ADB tools ###
 f_tools(){
   clear
   echo "Nexus Multitool - Version $nmtver"
-  echo "Device Selected: $devicemake $devicemodel ($currentdevice)"
-  echo "Android Version: "
+  echo "Connected Device: $devicemake $devicemodel ($currentdevice) ($serialno)"
+  echo "Android Version: $androidver ($androidbuild)"
   echo ""
   echo "[1] Pull File from Device"
   echo "[2] Push File to Device"
@@ -507,9 +786,12 @@ f_tools(){
   esac
 }
 
+############################# Options and settings ###
 f_options(){
   clear
   echo "Nexus Multitool - Version $nmtver"
+  echo "Connected Device: $devicemake $devicemodel ($currentdevice) ($serialno)"
+  echo "Android Version: $androidver ($androidbuild)"
   echo ""
   echo "[1] Update Nexus Multitool"
   echo ""
@@ -526,6 +808,7 @@ f_options(){
   esac
 }
 
+############################### Update this script ###
 f_update(){
   unamestr=`uname`
   case $unamestr in
