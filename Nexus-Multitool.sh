@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #Version
-nmtver="0.3"
+nmtver="0.4"
 
 f_setup(){
   clear
