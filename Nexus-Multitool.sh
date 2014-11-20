@@ -531,11 +531,11 @@ f_update(){
   case $unamestr in
   Darwin)
     self=$BASH_SOURCE
-    curl -o /tmp/NetHunter-Installer.sh 'https://raw.githubusercontent.com/photonicgeek/Nexus-Multitool/master/Nexus-Multitool.sh'  --progress-bar
+    curl -o /tmp/Nexus-Multitool.sh 'https://raw.githubusercontent.com/photonicgeek/Nexus-Multitool/master/Nexus-Multitool.sh'  --progress-bar
     clear
     rm -rf $self
-    mv /tmp/kfu.sh $self
-    rm -rf /tmp/kfu.sh
+    mv /tmp/Nexus-Multitool.sh $self
+    rm -rf /tmp/Nexus-Multitool.sh
     chmod 755 $self
     exec $self;;
   *)
