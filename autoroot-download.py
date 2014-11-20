@@ -26,7 +26,15 @@ class LatestRomUtil:
     self.device = device.strip().lower()
 
   def dlSuperSU(self):
-    if currentdevice == "mysidspr":
+    if currentdevice == "sojus":
+      getUrl = self.__getPage("http://download.chainfire.eu/supersu", True)
+    elif currentdevice == "sojuk":
+      getUrl = self.__getPage("http://download.chainfire.eu/supersu", True)
+    elif currentdevice == "sojua":
+      getUrl = self.__getPage("http://download.chainfire.eu/supersu", True)
+    elif currentdevice == "soju":
+      getUrl = self.__getPage("http://download.chainfire.eu/supersu", True)
+    elif currentdevice == "mysidspr":
       getUrl = self.__getPage("http://download.chainfire.eu/293/CF-Root/CF-Auto-Root/CF-Auto-Root-toroplus-mysidspr-galaxynexus.zip", True)
     elif currentdevice == "mysid":
       getUrl = self.__getPage("http://download.chainfire.eu/292/CF-Root/CF-Auto-Root/CF-Auto-Root-toro-mysid-galaxynexus.zip", True)

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #Version
-nmtver="0.5"
+nmtver="0.6"
 
 ################## Sets up ADB and and directories ###
 f_setup(){
@@ -223,10 +223,6 @@ f_root(){
   clear
   case $currentdevice in
     mysidspr|mysid|yakju|takju|occam|shamu|hammerhead|nakasi|nakasig|razor|razorg|mantaray|volantis)
-      echo "Boot into your device's OS like normal"
-      $adb wait-for-device
-      $adb reboot bootloader
-      sleep 15
       clear
       echo "Downloading files to root device..."
       cd $devicedir
@@ -241,6 +237,8 @@ f_root(){
       unzip $devicedir/root.zip
       clear
       echo "Rooting your device. This may take a minute..."
+      $adb reboot bootloader
+      sleep 15
       case $currentdevice in
         mysidspr) $fastboot boot $devicedir/root/image/CF-Auto-Root-toroplus-mysidspr-nexus7.img;;
         mysid) $fastboot boot $devicedir/root/image/CF-Auto-Root-toro-mysid-nexus7.img;;
@@ -256,13 +254,32 @@ f_root(){
         mantaray) $fastboot boot $devicedir/root/image/CF-Auto-Root-manta-mantaray-nexus7.img;;
         volantis) $fastboot boot $devicedir/root/image/CF-Auto-Root-flounder-volantis-nexus7.img;;
       esac
+      clear
+      echo "Your device is now rooted! You will, however, need to reinstall a custom recovery."
       echo ""
       read -p "Press [Enter] to return to the menu." null
       rm -rf $devicedir/root;;
-    *)
-      echo "The root method for this device is still undergoing development."
+    sojus|sojuk|sojua|soju)
+      clear
+      echo "Downloading files needed for root."
+      cd $devicedir
+      export currentdevice
+      curl -o $scriptdir/autoroot-download.py 'https://raw.githubusercontent.com/photonicgeek/Nexus-Multitool/master/autoroot-download.py' --progress-bar
+      python $scriptdir/autoroot-download.py
+      clear
+      echo "Download complete."
+      sleep 1
+      mv $devicedir/root.zip $devicedir/flashable-root.zip
+      $adb reboot recovery
+      sleep 15
+      $adb push $devicedir/flashable-root.zip /sdcard/tmp/root.zip
+      $adb shell "echo -e 'install /sdcard/tmp/root.zip\nreboot\n' > /cache/recovery/openrecoveryscript"
+      clear
+      $adb reboot recovery
+      echo "Your device is now being rooted! Give it a minute to finish, and it will reboot itself."
       echo ""
-      read -p "Press [Enter] to return to the menu." null;;
+      read -p "Press [Enter] to return to the menu." null
+      f_menu;;
   esac
 }
 
@@ -270,6 +287,10 @@ f_root(){
 f_twrp(){
   clear
   case $currentdevice in
+    sojus) url="http://techerrata.com/get/twrp2/crespo/openrecovery-twrp-2.8.1.0-crespo.img";;
+    sojuk) url="http://techerrata.com/get/twrp2/crespo/openrecovery-twrp-2.8.1.0-crespo.img";;
+    sojua) url="http://techerrata.com/get/twrp2/crespo/openrecovery-twrp-2.8.1.0-crespo.img";;
+    soju) url="http://techerrata.com/get/twrp2/crespo/openrecovery-twrp-2.8.1.0-crespo.img";;
     mysidspr) url="http://techerrata.com/get/twrp2/toroplus/openrecovery-twrp-2.8.1.0-toroplus.img";;
     mysid) url="http://techerrata.com/get/twrp2/toro/openrecovery-twrp-2.8.1.0-toro.img";;
     yakju) url="http://techerrata.com/get/twrp2/maguro/openrecovery-twrp-2.8.1.0-maguro.img";;
