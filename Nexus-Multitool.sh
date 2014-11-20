@@ -205,7 +205,7 @@ f_lock(){
 f_root(){
   clear
   case $currentdevice in
-    mysidspr|mysid|yakju|takju|occam|hammerhead|nakasi|nakasig|razor|razorg|mantaray|volantis)
+    mysidspr|mysid|yakju|takju|occam|shamu|hammerhead|nakasi|nakasig|razor|razorg|mantaray|volantis)
       echo "Boot into your device's OS like normal"
       $adb wait-for-device
       $adb reboot bootloader
@@ -230,6 +230,7 @@ f_root(){
         yakju) $fastboot boot $devicedir/root/image/CF-Auto-Root-maguro-yakju-nexus7.img;;
         takju) $fastboot boot $devicedir/root/image/CF-Auto-Root-maguro-takju-nexus7.img;;
         occam) $fastboot boot $devicedir/root/image/CF-Auto-Root-mako-occam-nexus7.img;;
+        shamu) $fastboot boot $devicedir/root/image/CF-Auto-Root-shamu-shamu-nexus7.img;;
         hammerhead) $fastboot boot $devicedir/root/image/CF-Auto-Root-hammerhead-hammerhead-nexus7.img;;
         nakasi) $fastboot boot $devicedir/root/image/CF-Auto-Root-grouper-nakasi-nexus7.img;;
         nakasig) $fastboot boot $devicedir/root/image/CF-Auto-Root-tilapia-nakasig-nexus7.img;;
@@ -256,6 +257,7 @@ f_twrp(){
     yakju) url="http://techerrata.com/get/twrp2/maguro/openrecovery-twrp-2.8.1.0-maguro.img";;
     takju) url="http://techerrata.com/get/twrp2/maguro/openrecovery-twrp-2.8.1.0-maguro.img";;
     occam) url="http://techerrata.com/get/twrp2/mako/openrecovery-twrp-2.8.1.0-mako.img";;
+    shamu) url="http://techerrata.com/get/twrp2/shamu/openrecovery-twrp-2.8.2.0-shamu.img";;
     hammerhead) url="http://techerrata.com/get/twrp2/hammerhead/openrecovery-twrp-2.8.1.0-hammerhead.img";;
     nakasi) url="http://techerrata.com/get/twrp2/grouper/openrecovery-twrp-2.8.1.0-grouper.img";;
     nakasig) url="http://techerrata.com/get/twrp2/tilapia/openrecovery-twrp-2.8.1.0-tilapia.img";;
@@ -329,7 +331,9 @@ f_restore(){
     hammerhead)
       restoredir="hammerhead-lrx21o"
       url="https://dl.google.com/dl/android/aosp/hammerhead-lrx21o-factory-01315e08.tgz";;
-    #shamu) url="";;
+    shamu)
+      restoredir="shamu-lrx21o"
+      url="https://dl.google.com/dl/android/aosp/shamu-lrx21o-factory-e028f5ea.tgz";;
     nakasi)
       restoredir="nakasi-lrx21p"
       url="https://dl.google.com/dl/android/aosp/nakasi-lrx21p-factory-93daa4d3.tgz";;
@@ -452,6 +456,7 @@ f_tools(){
   echo "[Q] Quit"
   echo ""
   read -p "Selection: " selection
+
   case $selection in
     1)
       clear

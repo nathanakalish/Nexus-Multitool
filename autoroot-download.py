@@ -36,6 +36,8 @@ class LatestRomUtil:
       getUrl = self.__getPage("http://download.chainfire.eu/291/CF-Root/CF-Auto-Root/CF-Auto-Root-maguro-takju-galaxynexus.zip", True)
     elif currentdevice == "occam":
       getUrl = self.__getPage("http://download.chainfire.eu/297/CF-Root/CF-Auto-Root/CF-Auto-Root-mako-occam-nexus4.zip", True)
+    elif currentdevice == "shamu":
+      getUrl = self.__getPage("http://download.chainfire.eu/628/CF-Root/CF-Auto-Root/CF-Auto-Root-shamu-shamu-nexus6.zip", True)
     elif currentdevice == "hammerhead":
       getUrl = self.__getPage("http://download.chainfire.eu/363/CF-Root/CF-Auto-Root/CF-Auto-Root-hammerhead-hammerhead-nexus5.zip", True)
     elif currentdevice == "nakasi":
