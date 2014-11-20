@@ -26,29 +26,29 @@ class LatestRomUtil:
     self.device = device.strip().lower()
 
   def dlSuperSU(self):
-    if currentdevice == "mysidspr-toroplus":
+    if currentdevice == "mysidspr":
       getUrl = self.__getPage("http://download.chainfire.eu/293/CF-Root/CF-Auto-Root/CF-Auto-Root-toroplus-mysidspr-galaxynexus.zip", True)
-    elif currentdevice == "mysid-toro":
+    elif currentdevice == "mysid":
       getUrl = self.__getPage("http://download.chainfire.eu/292/CF-Root/CF-Auto-Root/CF-Auto-Root-toro-mysid-galaxynexus.zip", True)
-    elif currentdevice == "yakju-maguro":
+    elif currentdevice == "yakju":
       getUrl = self.__getPage("http://download.chainfire.eu/296/CF-Root/CF-Auto-Root/CF-Auto-Root-maguro-yakju-galaxynexus.zip", True)
-    elif currentdevice == "takju-maguro":
+    elif currentdevice == "takju":
       getUrl = self.__getPage("http://download.chainfire.eu/291/CF-Root/CF-Auto-Root/CF-Auto-Root-maguro-takju-galaxynexus.zip", True)
-    elif currentdevice == "mako":
+    elif currentdevice == "occam":
       getUrl = self.__getPage("http://download.chainfire.eu/297/CF-Root/CF-Auto-Root/CF-Auto-Root-mako-occam-nexus4.zip", True)
     elif currentdevice == "hammerhead":
       getUrl = self.__getPage("http://download.chainfire.eu/363/CF-Root/CF-Auto-Root/CF-Auto-Root-hammerhead-hammerhead-nexus5.zip", True)
-    elif currentdevice == "grouper":
+    elif currentdevice == "nakasi":
       getUrl = self.__getPage("http://download.chainfire.eu/295/CF-Root/CF-Auto-Root/CF-Auto-Root-grouper-nakasi-nexus7.zip", True)
-    elif currentdevice == "tilapia":
+    elif currentdevice == "nakasig":
       getUrl = self.__getPage("http://download.chainfire.eu/294/CF-Root/CF-Auto-Root/CF-Auto-Root-tilapia-nakasig-nexus7.zip", True)
-    elif currentdevice == "flo":
+    elif currentdevice == "razor":
       getUrl = self.__getPage("http://download.chainfire.eu/347/CF-Root/CF-Auto-Root/CF-Auto-Root-flo-razor-nexus7.zip", True)
-    elif currentdevice == "deb":
+    elif currentdevice == "razorg":
       getUrl = self.__getPage("http://download.chainfire.eu/361/CF-Root/CF-Auto-Root/CF-Auto-Root-deb-razorg-nexus7.zip", True)
-    elif currentdevice == "manta":
+    elif currentdevice == "mantaray":
       getUrl = self.__getPage("http://download.chainfire.eu/290/CF-Root/CF-Auto-Root/CF-Auto-Root-manta-mantaray-nexus10.zip", True)
-    elif currentdevice == "flounder":
+    elif currentdevice == "volantis":
       getUrl = self.__getPage("http://download.chainfire.eu/595/CF-Root/CF-Auto-Root/CF-Auto-Root-flounder-volantis-nexus9.zip", True)
     else:
       exit()

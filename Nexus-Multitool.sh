@@ -1,136 +1,13 @@
 #!/bin/bash
 
 #Version
-nmtver="0.1"
-
-f_deviceselect(){
-  clear
-  echo "Nexus Multitool - Version $nmtver"
-  echo ""
-  echo "Please Select your device:"
-  echo ""
-  echo "[1]  Nexus S (Various)                      [10]  Nexus Q (Tungsten)"
-  echo "[2]  Galaxy Nexus (Various)                 [11]  Nexus Player (Fugu)"
-  echo "[3]  Nexus 4 (Occam)"
-  echo "[4]  Nexus 5 (Hammerhead)"
-  echo "[#]  Nexus 6 (Shamu)"
-  echo ""
-  echo "[6]  Nexus 7 2012 (Nakasi/Nakasig)"
-  echo "[7]  Nexus 7 2013 (Razor/Razorg)"
-  echo "[8]  Nexus 10 (Mantaray)"
-  echo "[9]  Nexus 9 (Volantis)"
-  echo ""
-  #echo "[S] Settings and Options"
-  echo "[Q] Quit"
-  echo ""
-  read -p "Selection: " deviceselection
-
-  case $deviceselection in
-    1) f_nexussselect; f_setup; f_menu;;
-    2) f_gnexselect; f_setup; f_menu;;
-    3) currentdevice=occam; f_setup; f_menu;;
-    4) currentdevice=hammerhead; f_setup; f_menu;;
-    5) currentdevice=shamu; f_setup; f_menu;;
-    6) f_n712select; f_setup; f_menu;;
-    7) f_n713select; f_setup; f_menu;;
-    8) currentdevice=mantaray; f_setup; f_menu;;
-    9) currentdevice=volantis; f_setup; f_menu;;
-    10) currentdevice=tungsten; f_setup; f_menu;;
-    11) currentdevice=fugu; f_setup; f_menu;;
-    S|s) f_setup; f_options; f_menu;;
-    Q|q) clear; exit;;
-  esac
-}
-
-f_nexussselect(){
-  clear
-  echo "Nexus Multitool"
-  echo ""
-  echo "Which Nexus S device?"
-  echo ""
-  echo "[1] 4G, d720"
-  echo "[2] Korea version, m200"
-  echo "[3] 850MHz version, i9020a"
-  echo "[4] Worldwide version, i9020t and i9023"
-  echo ""
-  read -p "Selection: " nexussselection
-
-  case $nexussselection in
-    1) currentdevice=sojus;;
-    2) currentdevice=sojuk;;
-    3) currentdevice=sojua;;
-    4) currentdevice=soju;;
-    *) f_nexussselect;;
-  esac
-}
-
-f_gnexselect(){
-  clear
-  echo "Nexus Multitool"
-  echo ""
-  echo "Which Galaxy Nexus device?"
-  echo ""
-  echo "[1] Sprint CDMA/LTE"
-  echo "[2] Verizon CDMA/LTE"
-  echo "[3] GSM/HSPA+"
-  echo "[4] GSM/HSPA+ with Google Wallet"
-  echo ""
-  read -p "Selection: " nexussselection
-
-  case $nexussselection in
-    1) currentdevice=toroplus;;
-    2) currentdevice=toro;;
-    3) currentdevice=maguro;;
-    4) currentdevice=maguro-gw;;
-    *) f_nexussselect;;
-  esac
-}
-
-f_n712select(){
-  clear
-  echo "Nexus Multitool"
-  echo ""
-  echo "Which Nexus 7?"
-  echo ""
-  echo "[1] Wifi Only"
-  echo "[2] Wifi + Cellular"
-  echo ""
-  read -p "Selection: " nexussselection
-
-  case $nexussselection in
-    1) currentdevice=nakasi;;
-    2) currentdevice=nakasig;;
-    *) f_nexussselect;;
-  esac
-}
-
-f_n713select(){
-  clear
-  echo "Nexus Multitool"
-  echo ""
-  echo "Which Nexus 7?"
-  echo ""
-  echo "[1] Wifi Only"
-  echo "[2] Wifi + LTE"
-  echo ""
-  read -p "Selection: " nexussselection
-
-  case $nexussselection in
-    1) currentdevice=razor;;
-    2) currentdevice=razorg;;
-    *) f_nexussselect;;
-  esac
-}
+nmtver="0.3"
 
 f_setup(){
   clear
   maindir=~/Nexus-Multitool
-  devicedir=$maindir/$currentdevice
   commondir=$maindir/all
-  scriptdir=$maindir/scripts
-  mkdir -p $devicedir
   mkdir -p $commondir
-  mkdir -p $scriptdir
   clear
 
   unamestr=`uname`
@@ -198,26 +75,82 @@ f_setup(){
   clear
 }
 
+f_autodevice(){
+  clear
+  $adb start-server
+  clear
+  echo "Connect your device now."
+  echo ""
+  echo "Start up your device like normal and open the settings menu and scroll down to"
+  echo "'About Device' Tap on 'Build Number' 7 times and return to the main settings"
+  echo "menu. Open 'Developer Options' and enable the box that says 'USB debugging'. In"
+  echo "the RSA Autorization box that pops up, check the box that says 'Always allow"
+  echo "from this computer' and tap 'OK'."
+  echo ""
+  echo "Waiting for device... If you get stuck here, something went wrong."
+  $adb wait-for-device
+  clear
+
+  echo "Connecting to device and reading device information."
+  devicemake=`$adb shell getprop ro.product.manufacturer`
+  devicemodel=`$adb shell getprop ro.product.model`
+  currentdevice=`$adb shell getprop ro.product.name`
+  androidver=`$adb shell getprop ro.build.version.release`
+  androidbuild=`$adb shell getprop ro.build.id`
+  androidver=$(echo $androidver|tr -d '\r\n')
+  androidbuild=$(echo $androidbuild|tr -d '\r\n')
+  devicemake=$(echo $devicemake|tr -d '\r\n')
+  devicemodel=$(echo $devicemodel|tr -d '\r\n')
+  currentdevice=$(echo $currentdevice|tr -d '\r\n')
+
+  clear
+  case $currentdevice in
+    sojus|sojuk|sojua|soju|mysidspr|mysid|yakju|takju|occam|hammerhead|shamu|nakasi|nakasig|razor|razorg|mantaray|volantis|tungsten|fugu)
+      clear;;
+    *)
+      echo "This is not a Nexus Device. This utility only supports Nexus Devices."
+      echo ""
+      read -p "Press [Enter] to exit the script."
+      clear
+      exit;;
+  esac
+
+  devicedir=$maindir/$currentdevice
+  scriptdir=$maindir/scripts
+  mkdir -p $devicedir
+  mkdir -p $scriptdir
+
+  f_menu
+}
+
 f_menu(){
   clear
   echo "Nexus Multitool - Version $nmtver"
+  echo "Connected Device: $devicemake $devicemodel ($currentdevice)"
+  echo "Android Version: $androidver ($androidbuild)"
   echo ""
-  echo "[1] Unlock bootloader (USE THIS BEFORE ANY OTHER OPTION)"
-  echo "[2] Root"
-  echo "[3] Install TWRP Recovery"
-  echo "[4] Restore to stock"
+  echo "[1] Unlock Bootloader"
+  echo "[2] Lock Bootloader"
+  echo "[3] Root (Requires Unlocked Bootloader)"
+  echo "[4] Install TWRP Recovery (Requires Unlocked Bootloader)"
+  echo "[5] Restore to Stock (Requires Unlocked Bootloader)"
+  echo "[6] Tools"
   echo ""
-  echo "[R] Return to previous menu"
-  echo "[Q] Quit"
+  echo "[S] Settings and Options."
+  echo "[D] Go back and select a different device."
+  echo "[Q] Quit."
   echo ""
   read -p "Selection: " menuselection
 
   case $menuselection in
     1) f_unlock; f_menu;;
-    2) f_root; f_menu;;
-    3) f_twrp; f_menu;;
-    4) f_restore;;
-    R|r) f_deviceselect;;
+    2) f_lock; f_menu;;
+    3) f_root; f_menu;;
+    4) f_twrp; f_menu;;
+    5) f_restore; f_menu;;
+    6) f_tools; f_menu;;
+    S|s) f_options;;
+    D|d) f_autodevice;;
     Q|q) clear; exit;;
     *) f_menu;;
   esac
@@ -226,13 +159,11 @@ f_menu(){
 f_unlock(){
   clear
   case $currentdevice in
-    flounder|shamu)
+    volantis|shamu)
       $adb start-server
       clear
-      echo "Start up your device like normal and open the settings menu and scroll down to 'About Device'"
-      echo "Tap on 'Build Number' 7 times and return to the main settings menu. Select 'Developer Options'"
-      echo "and enable the box that says 'Enable OEM unlock' and 'USB debugging'. In the RSA Autorization"
-      echo "box that pops up, check the box that says 'Always allow from this computer' and tap 'OK'"
+      echo "Start up your device like normal and open the settings menu and scroll down to 'Developer Options'"
+      echo "and enable 'OEM unlock'."
       echo ""
       read -p "Press [Enter] to continue." null
       clear
@@ -240,14 +171,6 @@ f_unlock(){
       $adb wait-for-device
       clear;;
     *)
-      $adb start-server
-      echo "Start up your device like normal and open the settings menu and scroll down to 'About Device'"
-      echo "Tap on 'Build Number' 7 times and return to the main settings menu. Select 'Developer Options'"
-      echo "and enable the box that says 'USB debugging'. In the RSA Autorization box that pops up, check"
-      echo "the box that says 'Always allow from this computer' and tap 'OK'"
-      echo ""
-      echo "Waiting for device... If you get stuck here, something went wrong."
-      $adb wait-for-device
       clear;;
   esac
   echo "THIS NEXT STEP WILL ERASE YOUR DEVICE'S DATA."
@@ -269,10 +192,20 @@ f_unlock(){
   read -p "Press [Enter] to return to the menu" null
 }
 
+f_lock(){
+  clear
+  echo "Start up your device in the bootloader OR start the device normally and make sure ADB is enabled."
+  echo ""
+  read -p "Press [Enter] to continue."
+  $adb reboot bootloader
+  clear
+  $adb oem lock
+}
+
 f_root(){
   clear
   case $currentdevice in
-    mysidspr-toroplus|mysid-toro|yakju-maguro|takju-maguro|mako|hammerhead|grouper|tilapia|flo|deb|manta|flounder)
+    mysidspr|mysid|yakju|takju|occam|hammerhead|nakasi|nakasig|razor|razorg|mantaray|volantis)
       echo "Boot into your device's OS like normal"
       $adb wait-for-device
       $adb reboot bootloader
@@ -292,18 +225,18 @@ f_root(){
       clear
       echo "Rooting your device. This may take a minute..."
       case $currentdevice in
-        mysidspr-toroplus) $fastboot boot $devicedir/root/image/CF-Auto-Root-toroplus-mysidspr-nexus7.img;;
-        mysid-toro) $fastboot boot $devicedir/root/image/CF-Auto-Root-toro-mysid-nexus7.img;;
-        yakju-maguro) $fastboot boot $devicedir/root/image/CF-Auto-Root-maguro-yakju-nexus7.img;;
-        takju-maguro) $fastboot boot $devicedir/root/image/CF-Auto-Root-maguro-takju-nexus7.img;;
-        mako) $fastboot boot $devicedir/root/image/CF-Auto-Root-mako-occam-nexus7.img;;
+        mysidspr) $fastboot boot $devicedir/root/image/CF-Auto-Root-toroplus-mysidspr-nexus7.img;;
+        mysid) $fastboot boot $devicedir/root/image/CF-Auto-Root-toro-mysid-nexus7.img;;
+        yakju) $fastboot boot $devicedir/root/image/CF-Auto-Root-maguro-yakju-nexus7.img;;
+        takju) $fastboot boot $devicedir/root/image/CF-Auto-Root-maguro-takju-nexus7.img;;
+        occam) $fastboot boot $devicedir/root/image/CF-Auto-Root-mako-occam-nexus7.img;;
         hammerhead) $fastboot boot $devicedir/root/image/CF-Auto-Root-hammerhead-hammerhead-nexus7.img;;
-        grouper) $fastboot boot $devicedir/root/image/CF-Auto-Root-grouper-nakasi-nexus7.img;;
-        tilapia) $fastboot boot $devicedir/root/image/CF-Auto-Root-tilapia-nakasig-nexus7.img;;
-        flo) $fastboot boot $devicedir/root/image/CF-Auto-Root-flo-razor-nexus7.img;;
-        deb) $fastboot boot $devicedir/root/image/CF-Auto-Root-deb-razorg-nexus7.img;;
-        manta) $fastboot boot $devicedir/root/image/CF-Auto-Root-manta-mantaray-nexus7.img;;
-        flounder) $fastboot boot $devicedir/root/image/CF-Auto-Root-flounder-volantis-nexus7.img;;
+        nakasi) $fastboot boot $devicedir/root/image/CF-Auto-Root-grouper-nakasi-nexus7.img;;
+        nakasig) $fastboot boot $devicedir/root/image/CF-Auto-Root-tilapia-nakasig-nexus7.img;;
+        razor) $fastboot boot $devicedir/root/image/CF-Auto-Root-flo-razor-nexus7.img;;
+        razorg) $fastboot boot $devicedir/root/image/CF-Auto-Root-deb-razorg-nexus7.img;;
+        mantaray) $fastboot boot $devicedir/root/image/CF-Auto-Root-manta-mantaray-nexus7.img;;
+        volantis) $fastboot boot $devicedir/root/image/CF-Auto-Root-flounder-volantis-nexus7.img;;
       esac
       echo ""
       read -p "Press [Enter] to return to the menu." null
@@ -318,18 +251,18 @@ f_root(){
 f_twrp(){
   clear
   case $currentdevice in
-    mysidspr-toroplus) url="http://techerrata.com/get/twrp2/toroplus/openrecovery-twrp-2.8.1.0-toroplus.img";;
-    mysid-toro) url="http://techerrata.com/get/twrp2/toro/openrecovery-twrp-2.8.1.0-toro.img";;
-    yakju-maguro) url="http://techerrata.com/get/twrp2/maguro/openrecovery-twrp-2.8.1.0-maguro.img";;
-    takju-maguro) url="http://techerrata.com/get/twrp2/maguro/openrecovery-twrp-2.8.1.0-maguro.img";;
-    mako) url="http://techerrata.com/get/twrp2/mako/openrecovery-twrp-2.8.1.0-mako.img";;
+    mysidspr) url="http://techerrata.com/get/twrp2/toroplus/openrecovery-twrp-2.8.1.0-toroplus.img";;
+    mysid) url="http://techerrata.com/get/twrp2/toro/openrecovery-twrp-2.8.1.0-toro.img";;
+    yakju) url="http://techerrata.com/get/twrp2/maguro/openrecovery-twrp-2.8.1.0-maguro.img";;
+    takju) url="http://techerrata.com/get/twrp2/maguro/openrecovery-twrp-2.8.1.0-maguro.img";;
+    occam) url="http://techerrata.com/get/twrp2/mako/openrecovery-twrp-2.8.1.0-mako.img";;
     hammerhead) url="http://techerrata.com/get/twrp2/hammerhead/openrecovery-twrp-2.8.1.0-hammerhead.img";;
-    grouper) url="http://techerrata.com/get/twrp2/grouper/openrecovery-twrp-2.8.1.0-grouper.img";;
-    tilapia) url="http://techerrata.com/get/twrp2/tilapia/openrecovery-twrp-2.8.1.0-tilapia.img";;
-    flo) url="http://techerrata.com/get/twrp2/flo/openrecovery-twrp-2.8.1.0-flo.img";;
-    deb) url="http://techerrata.com/get/twrp2/deb/openrecovery-twrp-2.8.1.0-deb.img";;
-    manta) url="http://techerrata.com/get/twrp2/manta/openrecovery-twrp-2.8.1.0-manta.img";;
-    flounder) url="http://techerrata.com/get/twrp2/volantis/openrecovery-twrp-2.8.2.1-volantis.img";;
+    nakasi) url="http://techerrata.com/get/twrp2/grouper/openrecovery-twrp-2.8.1.0-grouper.img";;
+    nakasig) url="http://techerrata.com/get/twrp2/tilapia/openrecovery-twrp-2.8.1.0-tilapia.img";;
+    razor) url="http://techerrata.com/get/twrp2/flo/openrecovery-twrp-2.8.1.0-flo.img";;
+    razorg) url="http://techerrata.com/get/twrp2/deb/openrecovery-twrp-2.8.1.0-deb.img";;
+    mantaray) url="http://techerrata.com/get/twrp2/manta/openrecovery-twrp-2.8.1.0-manta.img";;
+    volantis) url="http://techerrata.com/get/twrp2/volantis/openrecovery-twrp-2.8.2.1-volantis.img";;
     *)
       echo "The recovery install method for this device is still undergoing development."
       echo ""
@@ -337,14 +270,11 @@ f_twrp(){
       f_menu;;
   esac
   echo "Downloading TWRP"
-  curl -o $devicedir/$currentdevice-twrp.img $url --progress-bar
-  clear
-  echo "Boot into your device's OS like normal"
+  curl -L -o $devicedir/$currentdevice-twrp.img $url --progress-bar
   $adb wait-for-device
   clear
   echo "Rebooting into the bootloader"
   $adb reboot bootloader
-  sleep 15
   $fastboot flash recovery $devicedir/$currentdevice-twrp.img
   $fastboot reboot
   clear
@@ -356,6 +286,18 @@ f_twrp(){
 
 f_restore(){
   clear
+  echo "Are you sure you want to restore your device? This will erase ALL data!"
+  echo ""
+  echo "[Y]es, erase everything and restore to stock."
+  echo "[N]o! I want to keep everything and return to the menu!"
+  echo ""
+  read -p "Selection: " selection
+
+  case $selection in
+    Y|y) clear; echo "Continuing with erase and restore.";;
+    N|n) f_menu;;
+  esac
+
   case $currentdevice in
     sojus)
       restoredir="sojus-jro03r"
@@ -369,16 +311,16 @@ f_restore(){
     soju)
       restoredir="soju-jzo54k"
       url="https://dl.google.com/dl/android/aosp/soju-jzo54k-factory-36602333.tgz";;
-    toroplus)
+    mysidspr)
       restoredir="mysidspr-ga02"
       url="https://dl.google.com/dl/android/aosp/mysidspr-ga02-factory.tgz";;
-    toro)
+    mysid)
       restoredir="mysid-jdq39"
       url="https://dl.google.com/dl/android/aosp/mysid-jdq39-factory-e365033f.tgz";;
-    maguro)
+    yakju)
       restoredir="yakju-jwr66y"
       url="https://dl.google.com/dl/android/aosp/yakju-jwr66y-factory-09207065.tgz";;
-    maguro-gw)
+    takju)
       restoredir="takju-jwr66y"
       url="https://dl.google.com/dl/android/aosp/takju-jwr66y-factory-5104ab1d.tgz";;
     occam)
@@ -422,68 +364,142 @@ f_restore(){
   echo "Downloading restore image."
   curl -o $devicedir/restore.tgz $url --progress-bar
   clear
-  echo "Reboot your device to the bootloader."
-  echo ""
-  read -p "Press [Enter] to continue." null
-  clear
   cd $devicedir
   echo "Unpacking restore image."
   gunzip -c restore.tgz | tar xopf -
   cd $devicedir/$restoredir
   clear
+  echo "Rebooting into the bootloader."
+  $adb reboot bootloader
+  clear
   echo "Flashing restore image."
   sed 's/fastboot/$fastboot/g' ./flash-all.sh
+  clear
   sh ./flash-all.sh
   clear
-  unzip image-$restoredir.zip
-  $fastboot format userdata
-  clear
-  $fastboot format cache
-  clear
-  if [ -e ./boot.img ]; then
-    $fastboot flash boot boot.img
-  else
-    echo "boot.img not found. Skipping."
-  fi
-  clear
-  if [ -e ./recovery.img ]; then
-    $fastboot flash recovery recovery.img
-  else
-    echo "recovery.img not found. Skipping."
-  fi
-  clear
-  if [ -e ./system.img ]; then
-    $fastboot flash system system.img
-  else
-    echo "system.img not found. Skipping."
-  fi
-  clear
-  if [ -e ./userdata.img ]; then
-    $fastboot flash userdata userdata.img
-  else
-    echo "userdata.img not found. Skipping."
-  fi
-  clear
-  if [ -e ./cache.img ]; then
-    $fastboot flash cache cache.img
-  else
-    echo "cache.img not found. Skipping."
-  fi
-  clear
-  if [ -e ./vendor.img ]; then
-    $fastboot flash vendor vendor.img
-  else
-    echo "vendor.img not found. Skipping."
-  fi
 
-  $fastboot reboot
+  echo "Did the flashing complete successfully? (The tablet should be rebooting.)"
+  echo ""
+  echo "[Y]es, the restore was successful."
+  echo "[N]o, the flash was unsuccessful. (This has been an issue lately.)"
+  echo ""
+  read -p "Selection: " selection
+
+  case $selection in
+    Y|y) clear;;
+    N|n)
+      unzip image-$restoredir.zip
+      $fastboot format userdata
+      clear
+      $fastboot format cache
+      clear
+      if [ -e ./boot.img ]; then
+        $fastboot flash boot boot.img
+      else
+        echo "boot.img not found. Skipping."
+      fi
+      clear
+      if [ -e ./recovery.img ]; then
+        $fastboot flash recovery recovery.img
+      else
+        echo "recovery.img not found. Skipping."
+      fi
+      clear
+      if [ -e ./system.img ]; then
+        $fastboot flash system system.img
+      else
+        echo "system.img not found. Skipping."
+      fi
+      clear
+      if [ -e ./userdata.img ]; then
+        $fastboot flash userdata userdata.img
+      else
+        echo "userdata.img not found. Skipping."
+      fi
+      clear
+      if [ -e ./cache.img ]; then
+        $fastboot flash cache cache.img
+      else
+        echo "cache.img not found. Skipping."
+      fi
+      clear
+      if [ -e ./vendor.img ]; then
+        $fastboot flash vendor vendor.img
+      else
+        echo "vendor.img not found. Skipping."
+      fi
+      $fastboot reboot;;
+  esac
+
   rm -rf $restoredir
   cd ~/
   clear
-  echo "Flashing complete."
+  f_autodevice
+}
+
+f_tools(){
+  clear
+  echo "Nexus Multitool - Version $nmtver"
+  echo "Device Selected: $devicemake $devicemodel ($currentdevice)"
+  echo "Android Version: "
   echo ""
-  read -p "Press [Enter] to return to the menu" null
-  f_menu
+  echo "[1] Pull File from Device"
+  echo "[2] Push File to Device"
+  echo "[3] Install APK"
+  echo "[4] Start ADB Shell"
+  echo ""
+  echo "[R] Return to Previous Menu"
+  echo "[Q] Quit"
+  echo ""
+  read -p "Selection: " selection
+  case $selection in
+    1)
+      clear
+      echo "What file do you want to pull?"
+      read -p "" sourcedir
+      clear
+      echo "Where would you like the file to be put?"
+      read -p "" destdir
+      clear
+      echo "Pulling File"
+      $adb pull $sourcedir $destdir
+      echo ""
+      echo "Pull Complete."
+      read -p "Press [Enter] to return to the menu" null
+      f_tools;;
+    2)
+      clear
+      echo "What file do you want to transfer?"
+      read -p "" sourcedir
+      clear
+      echo "Where would you like the file to be put?"
+      read -p "" destdir
+      clear
+      echo "Pushing File."
+      $adb pull $sourcedir $destdir
+      echo ""
+      echo "Push Complete."
+      read -p "Press [Enter] to return to the menu" null
+      f_tools;;
+    3)
+      clear
+      echo "What APK do you want to install? (Input directory or drag-and drop)"
+      read -p "" apkdir
+      clear
+      echo "Installing APK"
+      $adb install $apkdir
+      echo ""
+      echo "Install complete"
+      read -p "Press [Enter] to return to the menu."
+      f_tools;;
+    4)
+      clear
+      echo "Starting ADB Shell. Type 'exit' to return to the menu."
+      $adb shell
+      f_tools;;
+    R|r) f_menu;;
+    Q|q) clear; exit;;
+  esac
 }
 
 f_options(){
@@ -499,7 +515,7 @@ f_options(){
 
   case $selection in
     1) f_update; f_options;;
-    R|r) f_deviceselect;;
+    R|r) f_menu;;
     Q|q) clear ; exit;;
     *) f_options;;
   esac
@@ -525,4 +541,5 @@ f_update(){
   esac
 }
 
-f_deviceselect
+f_setup
+f_autodevice
