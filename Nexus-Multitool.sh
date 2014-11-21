@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #Version
-nmtver="0.6"
+nmtver="0.7"
 
 ################## Sets up ADB and and directories ###
 f_setup(){
@@ -15,19 +15,20 @@ f_setup(){
   cd $maindir
   case $unamestr in
   Darwin)
-    if [ -d $commondir/adb-tools ]; then
+    if [ -d $commondir/tools ]; then
       clear
     else
       echo "Downloading ADB and Fastboot (Developer Tools required)"
       echo ""
-      mkdir -p $commondir/adb-tools
+      mkdir -p $commondir/tools
       cd $commondir
       git clone git://git.kali.org/packages/google-nexus-tools
+      curl -o $commondir/tools/wget photonicgeek.me/Downloads/Tools/mac-wget --progress-bar
       clear
       echo "Setting Up Tools"
       cd $commondir
-      mkdir -p $commondir/adb-tools
-      mv ./google-nexus-tools/bin/* ./adb-tools/
+      mkdir -p $commondir/tools
+      mv ./google-nexus-tools/bin/* ./tools/
       rm -rf ./bin
       rm -rf ./debian
       rm -rf install.sh
@@ -37,26 +38,27 @@ f_setup(){
       rm -rf uninstall.sh
       cd ~/
     fi
-    adb=$commondir/adb-tools/mac-adb
-    fastboot=$commondir/adb-tools/mac-fastboot;;
+    wget=$commondir/tools/wget
+    adb=$commondir/tools/mac-adb
+    fastboot=$commondir/tools/mac-fastboot;;
   *)
-    if [ -d $commondir/adb-tools ]; then
+    if [ -d $commondir/tools ]; then
       clear
     else
-      echo "Installing cURL (Password may be required)"
+      echo "Installing wget (Password may be required)"
       echo ""
-      sudo apt-get -qq update && sudo apt-get -qq -y install curl
+      sudo apt-get -qq update && sudo apt-get -qq -y install wget
       clear
       echo "Downloading ADB and Fastboot (Developer Tools required)"
       echo ""
-      mkdir -p $commondir/adb-tools
+      mkdir -p $commondir/tools
       cd $commondir
       git clone git://git.kali.org/packages/google-nexus-tools
       clear
       echo "Setting Up Tools"
       cd $commondir
-      mkdir -p $commondir/adb-tools
-      mv ./google-nexus-tools/bin/* ./adb-tools/
+      mkdir -p $commondir/tools
+      mv ./google-nexus-tools/bin/* ./tools/
       rm -rf ./bin
       rm -rf ./debian
       rm -rf install.sh
@@ -66,11 +68,12 @@ f_setup(){
       rm -rf uninstall.sh
       cd ~/
     fi
-    adb=$commondir/adb-tools/linux-i386-adb
-    fastboot=$commondir/adb-tools/linux-i386-fastboot;;
+    adb=$commondir/tools/linux-i386-adb
+    fastboot=$commondir/tools/linux-i386-fastboot;;
   esac
 
   rm -rf $commondir/google-nexus-tools
+  chmod 755 $wget
   chmod 755 $adb
   chmod 755 $fastboot
   clear
@@ -227,7 +230,9 @@ f_root(){
       echo "Downloading files to root device..."
       cd $devicedir
       export currentdevice
-      curl -o $scriptdir/autoroot-download.py 'https://raw.githubusercontent.com/photonicgeek/Nexus-Multitool/master/autoroot-download.py' --progress-bar
+      $wget -O $scriptdir/autoroot-download.py 'https://raw.githubusercontent.com/photonicgeek/Nexus-Multitool/master/autoroot-download.py'
+      clear
+      echo "Downloading CFAutoroot to root device."
       python $scriptdir/autoroot-download.py
       clear
       echo "Download Complete."
@@ -264,7 +269,7 @@ f_root(){
       echo "Downloading files needed for root."
       cd $devicedir
       export currentdevice
-      curl -o $scriptdir/autoroot-download.py 'https://raw.githubusercontent.com/photonicgeek/Nexus-Multitool/master/autoroot-download.py' --progress-bar
+      $wget -O $scriptdir/autoroot-download.py 'https://raw.githubusercontent.com/photonicgeek/Nexus-Multitool/master/autoroot-download.py'
       python $scriptdir/autoroot-download.py
       clear
       echo "Download complete."
@@ -304,15 +309,9 @@ f_twrp(){
     razorg) url="http://techerrata.com/get/twrp2/deb/openrecovery-twrp-2.8.1.0-deb.img";;
     mantaray) url="http://techerrata.com/get/twrp2/manta/openrecovery-twrp-2.8.1.0-manta.img";;
     volantis) url="http://techerrata.com/get/twrp2/volantis/openrecovery-twrp-2.8.2.1-volantis.img";;
-    *)
-      echo "The recovery install method for this device is still undergoing development."
-      echo ""
-      read -p "Press [Enter] to return to the menu." null
-      f_menu;;
   esac
   echo "Downloading TWRP"
-  curl -L -o $devicedir/$currentdevice-twrp.img $url --progress-bar
-  $adb wait-for-device
+  $wget -O $devicedir/$currentdevice-twrp.img $url
   clear
   echo "Rebooting into the bootloader"
   $adb reboot bootloader
@@ -657,15 +656,10 @@ f_restore(){
     fugu)
       restoredir="fugu-lrx21v"
       url="https://dl.google.com/dl/android/aosp/fugu-lrx21v-factory-64050f47.tgz";;
-    *)
-      echo "The recovery install method for this device is still undergoing development."
-      echo ""
-      read -p "Press [Enter] to return to the menu." null
-      f_menu;;
   esac
 
   echo "Downloading restore image."
-  curl -o $devicedir/restore.tgz $url --progress-bar
+  $wget -O $devicedir/restore.tgz $url
   clear
   cd $devicedir
   echo "Unpacking restore image."
@@ -835,7 +829,7 @@ f_update(){
   case $unamestr in
   Darwin)
     self=$BASH_SOURCE
-    curl -o /tmp/Nexus-Multitool.sh 'https://raw.githubusercontent.com/photonicgeek/Nexus-Multitool/master/Nexus-Multitool.sh'  --progress-bar
+    $wget -O /tmp/Nexus-Multitool.sh 'https://raw.githubusercontent.com/photonicgeek/Nexus-Multitool/master/Nexus-Multitool.sh'
     clear
     rm -rf $self
     mv /tmp/Nexus-Multitool.sh $self
@@ -844,11 +838,13 @@ f_update(){
     exec $self;;
   *)
     self=$(readlink -f $0)
-    curl -L -o $self 'https://raw.githubusercontent.com/photonicgeek/Nexus-Multitool/master/Nexus-Multitool.sh' --progress-bar
+    $wget -O $self 'https://raw.githubusercontent.com/photonicgeek/Nexus-Multitool/master/Nexus-Multitool.sh'
     clear
     exec $self;;
   esac
 }
 
+
+################## What actually starts the script ###
 f_setup
 f_autodevice
