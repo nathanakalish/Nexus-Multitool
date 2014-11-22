@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #Version
-nmtver="0.8 Beta"
+nmtver="0.9 Beta"
 
 ################## Sets up ADB and and directories ###
 f_setup(){
@@ -83,6 +83,7 @@ f_setup(){
 f_autodevice(){
   clear
   $adb start-server
+  cd ~/
   clear
   echo "Connect your device now."
   echo ""
@@ -103,12 +104,29 @@ f_autodevice(){
   androidver=`$adb shell getprop ro.build.version.release`
   androidbuild=`$adb shell getprop ro.build.id`
   serialno=`$adb shell getprop ro.serialno`
+  twrprecovery=`$adb shell ls /sdcard/ | grep "TWRP"`
+  rootedrom=`$adb shell which su`
+
   androidver=$(echo $androidver|tr -d '\r\n')
   androidbuild=$(echo $androidbuild|tr -d '\r\n')
   devicemake=$(echo $devicemake|tr -d '\r\n')
   devicemodel=$(echo $devicemodel|tr -d '\r\n')
   currentdevice=$(echo $currentdevice|tr -d '\r\n')
   serialno=$(echo $serialno|tr -d '\r\n')
+  twrprecovery=$(echo $twrprecovery|tr -d '\r\n')
+  rootedrom=$(echo $rootedrom|tr -d '\r\n')
+
+  if [ "$twrprecovery" == "TWRP" ]; then
+    twrprecovery="Detected"
+  else
+    twrprecovery="Not Detected"
+  fi
+
+  if [ "$rootedrom" == "/system/xbin/su" ]||[ "$rootedrom" == "/system/sbin/su" ]||[ "$rootedrom" == "/system/bin/su" ]; then
+    rootedrom="Rooted"
+  else
+    rootedrom="Not Rooted"
+  fi
 
   clear
   case $currentdevice in
@@ -134,14 +152,16 @@ f_menu(){
   clear
   echo "Nexus Multitool - Version $nmtver"
   echo "Connected Device: $devicemake $devicemodel ($currentdevice) ($serialno)"
-  echo "Android Version: $androidver ($androidbuild)"
+  echo "Android Version: $androidver ($androidbuild) $rootedrom"
+  echo "TWRP Recovery: $twrprecovery"
   echo ""
   echo "[1] Unlock / Lock Bootloader"
   echo "[2] Root                       (Requires Unlocked Bootloader)"
   echo "[3] Install TWRP Recovery      (Requires Unlocked Bootloader)"
-  echo "[4] Flash Custom Files         (Requires Unlocked Bootloader)"
-  echo "[5] Restore to Stock           (Requires Unlocked Bootloader)"
-  echo "[6] Tools"
+  echo "[4] Install custom ROM         (Requires Unlocked Bootloader + TWRP)"
+  echo "[5] Flash Custom Files         (Requires Unlocked Bootloader)"
+  echo "[6] Restore to Stock           (Requires Unlocked Bootloader)"
+  echo "[7] Tools"
   echo ""
   echo "[S] Settings and Options."
   echo "[D] Go back and select a different device."
@@ -153,9 +173,10 @@ f_menu(){
     1) f_unlocklock; f_menu;;
     2) f_root; f_menu;;
     3) f_twrp; f_menu;;
-    4) f_flash; f_menu;;
-    5) f_restore; f_menu;;
-    6) f_tools; f_menu;;
+    4) f_customrom; f_menu;;
+    5) f_flash; f_menu;;
+    6) f_restore; f_menu;;
+    7) f_tools; f_menu;;
     S|s) f_options;;
     D|d)
       clear
@@ -357,6 +378,178 @@ f_twrp(){
   echo "TWRP install complete. Your device is now rebooting."
   echo ""
   read -p "Press [Enter] to return to the main menu." null
+  f_menu
+}
+
+####################################### Custom ROM ###
+f_customrom(){
+  clear
+  echo "Select a ROM to install:"
+  echo ""
+  if [ $currentdevice == "mysidspr" ]||[ $currentdevice == "mysid" ]||[ $currentdevice == "yakju" ]||[ $currentdevice == "takju" ]||[ $currentdevice == "occam" ]||[ $currentdevice == "hammerhead" ]||[ $currentdevice == "nakasi" ]||[ $currentdevice == "nakasig" ]||[ $currentdevice == "razor" ]||[ $currentdevice == "razorg" ]||[ $currentdevice == "mantaray" ]; then
+    echo "[P] Paranoid Android"
+  else
+    echo "[X] Paranoid Android not avaliable."
+  fi
+  if [ $currentdevice == "yakju" ]||[ $currentdevice == "takju" ]||[ $currentdevice == "occam" ]||[ $currentdevice == "hammerhead" ]||[ $currentdevice == "nakasi" ]||[ $currentdevice == "nakasig" ]||[ $currentdevice == "razor" ]||[ $currentdevice == "razorg" ]||[ $currentdevice == "mantaray" ]; then
+    echo "[O] OmniROM"
+  else
+    echo "[X] OmniROM not avaliable."
+  fi
+  if [ $currentdevice == "sojus" ]||[ $currentdevice == "sojuk" ]||[ $currentdevice == "sojua" ]||[ $currentdevice == "soju" ]||[ $currentdevice == "mysidspr" ]||[ $currentdevice == "mysid" ]||[ $currentdevice == "yakju" ]||[ $currentdevice == "takju" ]||[ $currentdevice == "occam" ]||[ $currentdevice == "hammerhead" ]||[ $currentdevice == "nakasi" ]||[ $currentdevice == "nakasig" ]||[ $currentdevice == "razor" ]||[ $currentdevice == "razorg" ]||[ $currentdevice == "mantaray" ]; then
+    echo "[C] CyanogenMod"
+  else
+    echo "[X] CyanogenMod not avaliable."
+  fi
+  echo ""
+  echo "[M] Return to main menu."
+  echo "[Q] Quit"
+  echo ""
+  read -p "Selection: " selection
+
+  case $selection in
+    P|p) romselection="Paranoid-Android";;
+    O|o) romselection="OmniROM";;
+    C|c) romselection="CyanogenMod";;
+    M|m) f_menu;;
+    Q|q) clear; exit;;
+    *) f_customrom;;
+  esac
+
+  clear
+  echo "What kind of GApps package would you like?"
+  echo ""
+  echo "[1] Stock   (What is normally preinstalled on Nexus devices)"
+  echo "[2] Full    (Most all of all of the apps avaliable)"
+  echo "[3] Mini    (Only the common apps)"
+  echo "[4] Micro   (Small number of applications)"
+  echo "[5] Nano    (Play store + Google Search)"
+  echo "[6] Pico    (The bare minimum)"
+  echo ""
+  echo "[M] Return to main menu."
+  echo "[Q] Quit"
+  echo ""
+  read -p "Selection: " selection
+
+  case $selection in
+    1)
+      gappstype="Stock"
+      gappsurl="https://s.basketbuild.com/uploads/devs/TKruzze/Android%204.4.4%20GApps/Google%20Stock%20GApps/Older%20Versions/pa_gapps-stock-4.4.4-20141119-signed.zip";;
+    2)
+      gappstype="Full"
+      gappsurl="https://s.basketbuild.com/uploads/devs/TKruzze/Android%204.4.4%20GApps/Full-Modular%20GApps/Older%20Versions/pa_gapps-modular-full-4.4.4-20141119-signed.zip";;
+    3)
+      gappstype="Mini"
+      gappsurl="https://s.basketbuild.com/uploads/devs/TKruzze/Android%204.4.4%20GApps/Mini-Modular%20GApps/Older%20Versions/pa_gapps-modular-mini-4.4.4-20141119-signed.zip";;
+    4)
+      gappstype="Micro"
+      gappsurl="https://s.basketbuild.com/uploads/devs/TKruzze/Android%204.4.4%20GApps/Micro-Modular%20GApps/Older%20Versions/pa_gapps-modular-micro-4.4.4-20141119-signed.zip";;
+    5)
+      gappstype="Nano"
+      gappsurl="https://s.basketbuild.com/uploads/devs/TKruzze/Android%204.4.4%20GApps/Nano-Modular%20GApps/Older%20Versions/pa_gapps-modular-nano-4.4.4-20141119-signed.zip";;
+    6)
+      gappstype="Pico"
+      gappsurl="https://s.basketbuild.com/uploads/devs/TKruzze/Android%204.4.4%20GApps/Pico-Modular%20GApps/Older%20Versions/pa_gapps-modular-pico-4.4.4-20141119-signed.zip";;
+    M|m) f_menu;;
+    Q|q) clear; exit;;
+  esac
+
+  currentday=`date +%d`
+  ndays="1"
+  day=`expr $currentday - $ndays`
+  builddate=`date +%Y%m`"$day"
+
+  case $romselection in
+    Paranoid-Android)
+      case $currentdevice in
+        mysidspr) romurl="http://download.paranoidandroid.co/roms/toroplus/pa_toroplus-4.6-BETA6-20141103.zip";;
+        mysid) romurl="http://download.paranoidandroid.co/roms/toro/pa_toro-4.6-BETA6-20141103.zip";;
+        yakju) romurl="http://download.paranoidandroid.co/roms/maguro/pa_maguro-4.6-BETA6-20141103.zip";;
+        takju) romurl="http://download.paranoidandroid.co/roms/maguro/pa_maguro-4.6-BETA6-20141103.zip";;
+        occam) romurl="http://download.paranoidandroid.co/roms/mako/pa_mako-4.6-BETA6-20141103.zip";;
+        hammerhead) romurl="http://download.paranoidandroid.co/roms/hammerhead/pa_hammerhead-4.6-BETA6-20141103.zip";;
+        nakasi) romurl="http://download.paranoidandroid.co/roms/grouper/pa_grouper-4.6-BETA6-20141103.zip";;
+        nakasig) romurl="http://download.paranoidandroid.co/roms/tilapia/pa_tilapia-4.6-BETA6-20141103.zip";;
+        razor) romurl="http://download.paranoidandroid.co/roms/flo/pa_flo-4.6-BETA6-20141103.zip";;
+        razorg) romurl="http://download.paranoidandroid.co/roms/deb/pa_deb-4.6-BETA6-20141103.zip";;
+        mantaray) romurl="http://download.paranoidandroid.co/roms/manta/pa_manta-4.6-BETA6-20141103.zip";;
+      esac;;
+    OmniROM)
+      case $currentdevice in
+        mysidspr) romurl="http://dl.omnirom.org/toroplus/omni-4.4.4-$builddate-toroplus-NIGHTLY.zip";;
+        mysid) romurl="http://dl.omnirom.org/toro/omni-4.4.4-$builddate-toro-NIGHTLY.zip";;
+        yakju) romurl="http://dl.omnirom.org/maguro/omni-4.4.4-$builddate-maguro-NIGHTLY.zip";;
+        takju) romurl="http://dl.omnirom.org/maguro/omni-4.4.4-$builddate-maguro-NIGHTLY.zip";;
+        occam) romurl="http://dl.omnirom.org/mako/omni-4.4.4-$builddate-mako-NIGHTLY.zip";;
+        hammerhead) romurl="http://dl.omnirom.org/hammerhead/omni-4.4.4-$builddate-hammerhead-NIGHTLY.zip";;
+        nakasi) romurl="http://dl.omnirom.org/grouper/omni-4.4.4-$builddate-grouper-NIGHTLY.zip";;
+        nakasig) romurl="http://dl.omnirom.org/tilapia/omni-4.4.4-$builddate-tilapia-NIGHTLY.zip";;
+        razor) romurl="http://dl.omnirom.org/flo/omni-4.4.4-$builddate-flo-NIGHTLY.zip";;
+        razorg) romurl="http://dl.omnirom.org/deb/omni-4.4.4-$builddate-deb-NIGHTLY.zip";;
+        mantaray) romurl="http://dl.omnirom.org/manta/omni-4.4.4-$builddate-manta-NIGHTLY.zip";;
+      esac;;
+    CyanogenMod)
+      case $currentdevice in
+        sojus) romurl="http://download.cyanogenmod.org/get/jenkins/90440/cm-11-20141112-SNAPSHOT-M12-crespo.zip";;
+        sojuk) romurl="http://download.cyanogenmod.org/get/jenkins/90440/cm-11-20141112-SNAPSHOT-M12-crespo.zip";;
+        sojua) romurl="http://download.cyanogenmod.org/get/jenkins/90440/cm-11-20141112-SNAPSHOT-M12-crespo.zip";;
+        soju) romurl="http://download.cyanogenmod.org/get/jenkins/90440/cm-11-20141112-SNAPSHOT-M12-crespo.zip";;
+        mysidspr) romurl="http://download.cyanogenmod.org/get/jenkins/75251/cm-11-20140708-SNAPSHOT-M8-toroplus.zip";;
+        mysid) romurl="http://download.cyanogenmod.org/get/jenkins/78509/cm-11-20140804-SNAPSHOT-M9-toro.zip";;
+        yakju) romurl="http://download.cyanogenmod.org/get/jenkins/90777/cm-11-20141115-SNAPSHOT-M12-maguro.zip";;
+        takju) romurl="http://download.cyanogenmod.org/get/jenkins/90777/cm-11-20141115-SNAPSHOT-M12-maguro.zip";;
+        occam) romurl="http://download.cyanogenmod.org/get/jenkins/90767/cm-11-20141115-SNAPSHOT-M12-mako.zip";;
+        hammerhead) romurl="http://download.cyanogenmod.org/get/jenkins/86435/cm-11-20141008-SNAPSHOT-M11-hammerhead.zip";;
+        nakasi) romurl="http://download.cyanogenmod.org/get/jenkins/90453/cm-11-20141112-SNAPSHOT-M12-grouper.zip";;
+        nakasig) romurl="http://download.cyanogenmod.org/get/jenkins/83804/cm-11-20140916-SNAPSHOT-M10-tilapia.zip";;
+        razor) romurl="http://download.cyanogenmod.org/get/jenkins/90768/cm-11-20141115-SNAPSHOT-M12-flo.zip";;
+        razorg) romurl="http://download.cyanogenmod.org/get/jenkins/90776/cm-11-20141115-SNAPSHOT-M12-deb.zip";;
+        mantaray) romurl="http://download.cyanogenmod.org/get/jenkins/86455/cm-11-20141008-SNAPSHOT-M11-manta.zip";;
+      esac;;
+  esac
+
+  clear
+  echo "Downloading ROM."
+  $wget -O $devicedir/$romselection-ROM.zip $romurl
+  clear
+  echo "Downloaded ROM."
+
+  clear
+  echo "Downloading GApps."
+  $wget -O $commondir/gapps/$gappstype-GApps.zip $gappsurl
+  clear
+  echo "Downloaded GApps."
+
+  clear
+  echo "Downloading SuperSU."
+  currentdevicetmp=$currentdevice
+  currentdevice="supersu"
+  export currentdevice
+  $wget -O $scriptdir/autoroot-download.py 'https://raw.githubusercontent.com/photonicgeek/Nexus-Multitool/master/autoroot-download.py'
+  cd $commondir
+  clear
+  python $scriptdir/autoroot-download.py
+  clear
+  cd ~/
+  currentdevice=$currentdevicetmp
+  clear
+  echo "Downloaded SuperSU."
+
+  sleep 3
+
+  clear
+  echo "Please wait while the ROM is being installed."
+  $adb reboot recovery
+  sleep 20
+  $adb push $devicedir/$romselection-ROM.zip /sdcard/tmp/rom.zip
+  $adb push $commondir/gapps/$gappstype-GApps.zip /sdcard/tmp/gapps.zip
+  $adb push $commondir/root.zip /sdcard/tmp/root.zip
+  $adb shell "echo -e 'install /sdcard/tmp/rom.zip\ninstall /sdcard/tmp/gapps.zip\ninstall /sdcard/tmp/root.zip\nwipe cache\nwipe data\nreboot\n' > /cache/recovery/openrecoveryscript"
+  $adb reboot recovery
+  clear
+  echo "The device is now rebooting. Give it time to flash the new ROM. It will boot on its own."
+  echo ""
+  read -p "Press [Enter] to return to the main menu."
   f_menu
 }
 
