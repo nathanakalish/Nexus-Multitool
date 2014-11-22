@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #Version
-nmtver="0.7"
+nmtver="0.8 Beta"
 
 ################## Sets up ADB and and directories ###
 f_setup(){
@@ -115,7 +115,7 @@ f_autodevice(){
     sojus|sojuk|sojua|soju|mysidspr|mysid|yakju|takju|occam|hammerhead|shamu|nakasi|nakasig|razor|razorg|mantaray|volantis|tungsten|fugu)
       clear;;
     *)
-      echo "This is not a Nexus Device. This utility only supports Nexus Devices."
+      echo "This is not a Nexus device. This utility only supports Nexus devices."
       echo ""
       read -p "Press [Enter] to exit the script."
       clear
@@ -126,25 +126,22 @@ f_autodevice(){
   scriptdir=$maindir/scripts
   mkdir -p $devicedir
   mkdir -p $scriptdir
-
-  f_menu
 }
 
 ######################################## Main Menu ###
 f_menu(){
+  f_autodevice
   clear
   echo "Nexus Multitool - Version $nmtver"
   echo "Connected Device: $devicemake $devicemodel ($currentdevice) ($serialno)"
   echo "Android Version: $androidver ($androidbuild)"
   echo ""
-  echo "[1] Unlock Bootloader"
-  echo "[2] Lock Bootloader"
-  echo "[3] Root (Requires Unlocked Bootloader)"
-  echo "[4] Install TWRP Recovery (Requires Unlocked Bootloader)"
-  echo "[5] TWRP Tools (Requires TWRP)"
-  echo "[6] Flash Files (Requires Unlocked Bootloader)"
-  echo "[7] Restore to Stock (Requires Unlocked Bootloader)"
-  echo "[8] ADB Tools"
+  echo "[1] Unlock / Lock Bootloader"
+  echo "[2] Root                       (Requires Unlocked Bootloader)"
+  echo "[3] Install TWRP Recovery      (Requires Unlocked Bootloader)"
+  echo "[4] Flash Custom Files         (Requires Unlocked Bootloader)"
+  echo "[5] Restore to Stock           (Requires Unlocked Bootloader)"
+  echo "[6] Tools"
   echo ""
   echo "[S] Settings and Options."
   echo "[D] Go back and select a different device."
@@ -153,72 +150,99 @@ f_menu(){
   read -p "Selection: " menuselection
 
   case $menuselection in
-    1) f_unlock; f_menu;;
-    2) f_lock; f_menu;;
-    3) f_root; f_menu;;
-    4) f_twrp; f_menu;;
-    5) f_twrptools; f_menu;;
-    6) f_flash; f_menu;;
-    7) f_restore; f_menu;;
-    8) f_tools; f_menu;;
+    1) f_unlocklock; f_menu;;
+    2) f_root; f_menu;;
+    3) f_twrp; f_menu;;
+    4) f_flash; f_menu;;
+    5) f_restore; f_menu;;
+    6) f_tools; f_menu;;
     S|s) f_options;;
-    D|d) f_autodevice;;
+    D|d)
+      clear
+      echo "Unplug your current device, and plug in a new one."
+      echo ""
+      read -p "Press [Enter] to continue." null
+      clear
+      f_autodevice;;
     Q|q) clear; exit;;
     *) f_menu;;
   esac
 }
 
 ########################### Unlocks the bootloader ###
-f_unlock(){
+f_unlocklock(){
   clear
-  case $currentdevice in
-    volantis|shamu)
-      $adb start-server
-      clear
-      echo "Start up your device like normal and open the settings menu and scroll down to 'Developer Options'"
-      echo "and enable 'OEM unlock'."
-      echo ""
-      read -p "Press [Enter] to continue." null
-      clear;;
-    *)
-      clear;;
-  esac
-
-  echo "THIS NEXT STEP WILL ERASE YOUR DEVICE'S DATA."
-  echo "Make sure taht anything you wish to keep is backed"
-  echo "up and taken off of the device!"
+  echo "Would you like to unlock or lock your bootloader?"
   echo ""
-  read -p "Press [Enter] to continue." null
-  clear
-  $adb reboot bootloader
-  sleep 20
-  $fastboot oem unlock
-  clear
-  echo "On your device, select the option to accept, unlock your device's bootloader, and erase all data."
+  echo "[1] Unlock Bootloader"
+  echo "[2] Lock Bootloader"
   echo ""
-  read -p "Press [Enter] to continue." null
-  clear
-  echo "Bootloader Unlocked"
+  echo "[M] Return to Main Menu"
+  echo "[Q] Quit"
   echo ""
-  read -p "Press [Enter] to return to the menu" null
-}
-
-############################# Locks the bootloader ###
-f_lock(){
-  clear
-  echo "Are you sure you would like to lock the bootloader? To unlock again means you need to erase your"
-  echo "data."
-  echo ""
-  read -p "Press [Enter] to continue, or [M] to return to the menu." selection
+  read -p "Selection:" selection
 
   case $selection in
-    M|m) f_menu;;
-    *) clear;;
-  esac
+    1)
+      clear
+      case $currentdevice in
+        volantis|shamu)
+          $adb start-server
+          clear
+          echo "Start up your device like normal and open the settings menu and scroll down to 'Developer Options'"
+          echo "and enable 'OEM unlock'."
+          echo ""
+          read -p "Press [Enter] to continue." null
+          clear;;
+        *)
+          clear;;
+      esac
 
-  $adb reboot bootloader
-  clear
-  $adb oem lock
+      echo "THIS NEXT STEP WILL ERASE YOUR DEVICE'S DATA."
+      echo ""
+      echo "Make sure that anything you wish to keep is backed up and taken off of the device!"
+      echo ""
+      read -p "Press [Enter] to continue, or [M] to return to the main menu." null
+
+      case $selection in
+        M|m) f_menu;;
+        *) clear;;
+      esac
+
+      clear
+      $adb reboot bootloader
+      sleep 20
+      $fastboot oem unlock
+      clear
+      echo "On your device, select the option to accept, unlock your device's bootloader, and erase all data."
+      echo ""
+      read -p "Press [Enter] to continue." null
+      clear
+      echo "Bootloader Unlocked"
+      echo ""
+      read -p "Press [Enter] to return to the main menu." null;;
+    2)
+      clear
+      echo "Are you sure you would like to lock the bootloader? To unlock again means you need to erase your"
+      echo "data."
+      echo ""
+      read -p "Press [Enter] to continue, or [M] to return to the main menu." selection
+
+      case $selection in
+        M|m) f_menu;;
+        *) clear;;
+      esac
+
+      $adb reboot bootloader
+      clear
+      $adb oem lock
+      echo "Bootloader locked."
+      echo ""
+      read -p "Press [Enter] to return to the main menu."
+      f_menu;;
+    M|m) f_menu;;
+    Q|q) clear; exit;;
+  esac
 }
 
 ################################# Roots the device ###
@@ -227,7 +251,7 @@ f_root(){
   case $currentdevice in
     mysidspr|mysid|yakju|takju|occam|shamu|hammerhead|nakasi|nakasig|razor|razorg|mantaray|volantis)
       clear
-      echo "Downloading files to root device..."
+      echo "Downloading files to root device."
       cd $devicedir
       export currentdevice
       $wget -O $scriptdir/autoroot-download.py 'https://raw.githubusercontent.com/photonicgeek/Nexus-Multitool/master/autoroot-download.py'
@@ -241,7 +265,7 @@ f_root(){
       cd $devicedir/root
       unzip $devicedir/root.zip
       clear
-      echo "Rooting your device. This may take a minute..."
+      echo "Rooting your device. This may take a minute."
       $adb reboot bootloader
       sleep 15
       case $currentdevice in
@@ -260,9 +284,9 @@ f_root(){
         volantis) $fastboot boot $devicedir/root/image/CF-Auto-Root-flounder-volantis-nexus7.img;;
       esac
       clear
-      echo "Your device is now rooted! You will, however, need to reinstall a custom recovery."
+      echo "Your device is now rooted! You will, however, need to reinstall a custom kernel."
       echo ""
-      read -p "Press [Enter] to return to the menu." null
+      read -p "Press [Enter] to return to the main menu." null
       rm -rf $devicedir/root;;
     sojus|sojuk|sojua|soju)
       clear
@@ -283,7 +307,13 @@ f_root(){
       $adb reboot recovery
       echo "Your device is now being rooted! Give it a minute to finish, and it will reboot itself."
       echo ""
-      read -p "Press [Enter] to return to the menu." null
+      read -p "Press [Enter] to return to the main menu." null
+      f_menu;;
+    *)
+      clear
+      echo "Sorry, but this device doesn't support being rooted at this time."
+      echo ""
+      read -p "Press [Enter] to return to the menu."
       f_menu;;
   esac
 }
@@ -309,135 +339,25 @@ f_twrp(){
     razorg) url="http://techerrata.com/get/twrp2/deb/openrecovery-twrp-2.8.1.0-deb.img";;
     mantaray) url="http://techerrata.com/get/twrp2/manta/openrecovery-twrp-2.8.1.0-manta.img";;
     volantis) url="http://techerrata.com/get/twrp2/volantis/openrecovery-twrp-2.8.2.1-volantis.img";;
+    *)
+      clear
+      echo "Sorry, but this device doesn't support being rooted at this time."
+      echo ""
+      read -p "Press [Enter] to return to the menu."
+      f_menu;;
   esac
   echo "Downloading TWRP"
   $wget -O $devicedir/$currentdevice-twrp.img $url
   clear
-  echo "Rebooting into the bootloader"
+  echo "Rebooting into the bootloader."
   $adb reboot bootloader
   $fastboot flash recovery $devicedir/$currentdevice-twrp.img
   $fastboot reboot
   clear
   echo "TWRP install complete. Your device is now rebooting."
   echo ""
-  read -p "Press [Enter] to return to the menu." null
+  read -p "Press [Enter] to return to the main menu." null
   f_menu
-}
-
-####################################### TWRP stuff ###
-f_twrptools(){
-  clear
-  echo "Nexus Multitool - Version $nmtver"
-  echo "Connected Device: $devicemake $devicemodel ($currentdevice) ($serialno)"
-  echo "Android Version: $androidver ($androidbuild)"
-  echo ""
-  echo "[1] Back Up device and copy to computer"
-  echo "[2] Restore device from backup on computer"
-  echo ""
-  echo "[M] Return to the Menu"
-  echo "[Q] Quit"
-  echo ""
-  read -p "Selection: " selection
-
-  case $selection in
-    1)
-      clear
-      echo "What partitions do you want to back up? Type any that apply."
-      echo ""
-      echo "S = System"
-      echo "D = Data"
-      echo "C = Cache"
-      echo "R = Recovery"
-      echo "B = Boot"
-      echo "A = Android secure"
-      echo "E = SD-Ext"
-      echo ""
-      echo "O = Use Compression"
-      echo "M = Don't create MD5"
-      echo ""
-      read -p "Back up: " partitions
-      clear
-      partitions=$(echo $partitions | tr 'a-z' 'A-Z')
-      partitions=$(echo $partitions | tr -d ' ')
-      clear
-      echo "What do you want the backup to be named?"
-      echo ""
-      read -p "Name: " backupname
-      clear
-      echo "Starting backup. Please wait."
-      $adb reboot recovery
-      sleep 20
-      $adb shell "echo -e 'backup $partitions $backupname\nreboot recovery\n' > /cache/recovery/openrecoveryscript"
-      $adb reboot recovery
-      clear
-      read -p "Press [Enter] when the backup is complete and the device is back in recovery." null
-      clear
-      echo "Pulling Backup off the device"
-      echo ""
-      $adb pull /sdcard/TWRP/BACKUPS/$serialno/$backupname/ $devicedir/backups/$serialno/$backupname
-      $adb shell rm -rf /sdcard/TWRP/BACKUPS/$serialno/$backupname
-      $adb reboot
-      clear
-      echo "Backup complete! Backup located at:"
-      echo "$devicedir/Backups/$backupname"
-      echo ""
-      read -p "Press [Enter] To return to the menu." null
-      f_twrptools;;
-    2)
-      clear
-      ls $devicedir/backups/$serialno
-      echo ""
-      echo "Enter the name of the backup that you want to restore."
-      echo ""
-      read -p "Backup: " backupname
-      if [ -d $devicedir/backups/$serialno/$backupname ]; then
-        clear
-      else
-        clear
-        echo "That backup doesn't exist! Returning to menu."
-        sleep 3
-        f_twrptools
-      fi
-
-      clear
-      echo "What partitions do you want to restore from the backup? Type any that apply."
-      echo ""
-      echo "S = System"
-      echo "D = Data"
-      echo "C = Cache"
-      echo "R = Recovery"
-      echo "B = Boot"
-      echo "A = Android secure"
-      echo "E = SD-Ext"
-      echo ""
-      read -p "Back up: " partitions
-      clear
-      partitions=$(echo $partitions | tr 'a-z' 'A-Z')
-      partitions=$(echo $partitions | tr -d ' ')
-
-      $adb reboot recovery
-      sleep 20
-
-      clear
-      echo "Pushing backup to device."
-      echo ""
-      $adb shell "echo -e 'restore $backupname $partitions\nreboot recovery\n' > /cache/recovery/openrecoveryscript"
-      $adb push $devicedir/backups/$serialno/$backupname /sdcard/TWRP/BACKUPS/$serialno/$backupname
-      $adb reboot recovery
-      clear
-      read -p "Press [Enter] when the restore is complete and the device is back in recovery." null
-      clear
-      $adb shell rm -rf /sdcard/TWRP/BACKUPS/$serialno/$backupname
-      $adb reboot
-      clear
-      echo "Restore complete."
-      echo ""
-      read -p "Press [Enter] to return to the menu."
-      clear
-      f_twrptools;;
-    M|m) f_menu;;
-    Q|q) clear; exit;;
-  esac
 }
 
 ####################### Flashes a variety of files ###
@@ -475,7 +395,7 @@ f_flash(){
       clear
       echo "Flashing complete."
       echo ""
-      read -p "Press [Enter] to return to the menu." null
+      read -p "Press [Enter] to return to the main menu." null
       clear
       f_flash;;
     2)
@@ -502,7 +422,7 @@ f_flash(){
       clear
       echo "Flashing complete."
       echo ""
-      read -p "Press [Enter] to return to the menu." null
+      read -p "Press [Enter] to return to the main menu." null
       clear
       f_flash;;
     3)
@@ -529,7 +449,7 @@ f_flash(){
       clear
       echo "Flashing complete."
       echo ""
-      read -p "Press [Enter] to return to the menu." null
+      read -p "Press [Enter] to return to the main menu." null
       clear
       f_flash;;
     4)
@@ -544,7 +464,7 @@ f_flash(){
       clear
       echo "Flashing complete."
       echo ""
-      read -p "Press [Enter] to return to the menu." null
+      read -p "Press [Enter] to return to the main menu." null
       clear
       f_flash;;
     5)
@@ -559,7 +479,7 @@ f_flash(){
       clear
       echo "Flashing complete."
       echo ""
-      read -p "Press [Enter] to return to the menu." null
+      read -p "Press [Enter] to return to the main menu." null
       clear
       f_flash;;
     6)
@@ -574,7 +494,7 @@ f_flash(){
       clear
       echo "Flashing complete."
       echo ""
-      read -p "Press [Enter] to return to the menu." null
+      read -p "Press [Enter] to return to the main menu." null
       clear
       f_flash;;
     M|m) f_menu;;
@@ -678,7 +598,7 @@ f_restore(){
   echo "Did the flashing complete successfully? (The tablet should be rebooting.)"
   echo ""
   echo "[Y]es, the restore was successful."
-  echo "[N]o, the flash was unsuccessful. (This has been an issue lately.)"
+  echo "[N]o, the flash was unsuccessful. (This is an issue with google for the Nexus 6 and 9.)"
   echo ""
   read -p "Selection: " selection
 
@@ -745,8 +665,10 @@ f_tools(){
   echo "[2] Push File to Device"
   echo "[3] Install APK"
   echo "[4] Start ADB Shell"
+  echo "[5] Back Up device and copy to computer (Requires TWRP)"
+  echo "[6] Restore device from backup on computer (Requires TWRP)"
   echo ""
-  echo "[R] Return to Previous Menu"
+  echo "[M] Return to Previous Menu"
   echo "[Q] Quit"
   echo ""
   read -p "Selection: " selection
@@ -760,11 +682,11 @@ f_tools(){
       echo "Where would you like the file to be put?"
       read -p "" destdir
       clear
-      echo "Pulling File"
+      echo "Pulling File."
       $adb pull $sourcedir $destdir
       echo ""
       echo "Pull Complete."
-      read -p "Press [Enter] to return to the menu" null
+      read -p "Press [Enter] to return to the main menu." null
       f_tools;;
     2)
       clear
@@ -778,7 +700,7 @@ f_tools(){
       $adb pull $sourcedir $destdir
       echo ""
       echo "Push Complete."
-      read -p "Press [Enter] to return to the menu" null
+      read -p "Press [Enter] to return to the main menu." null
       f_tools;;
     3)
       clear
@@ -789,14 +711,109 @@ f_tools(){
       $adb install $apkdir
       echo ""
       echo "Install complete"
-      read -p "Press [Enter] to return to the menu."
+      read -p "Press [Enter] to return to the main menu."
       f_tools;;
     4)
       clear
       echo "Starting ADB Shell. Type 'exit' to return to the menu."
       $adb shell
       f_tools;;
-    R|r) f_menu;;
+    5)
+      clear
+      echo "What partitions do you want to back up? Type any that apply."
+      echo ""
+      echo "S = System"
+      echo "D = Data"
+      echo "C = Cache"
+      echo "R = Recovery"
+      echo "B = Boot"
+      echo "A = Android secure"
+      echo "E = SD-Ext"
+      echo ""
+      echo "O = Use Compression"
+      echo "M = Don't create MD5"
+      echo ""
+      read -p "Back up: " partitions
+      clear
+      partitions=$(echo $partitions | tr 'a-z' 'A-Z')
+      partitions=$(echo $partitions | tr -d ' ')
+      clear
+      echo "What do you want the backup to be named?"
+      echo ""
+      read -p "Name: " backupname
+      clear
+      echo "Starting backup. Please wait."
+      $adb reboot recovery
+      sleep 20
+      $adb shell "echo -e 'backup $partitions $backupname\nreboot recovery\n' > /cache/recovery/openrecoveryscript"
+      $adb reboot recovery
+      clear
+      read -p "Press [Enter] when the backup is complete and the device is back in recovery." null
+      clear
+      echo "Pulling Backup off the device"
+      echo ""
+      $adb pull /sdcard/TWRP/BACKUPS/$serialno/$backupname/ $devicedir/backups/$serialno/$backupname
+      $adb shell rm -rf /sdcard/TWRP/BACKUPS/$serialno/$backupname
+      $adb reboot
+      clear
+      echo "Backup complete! Backup located at:"
+      echo "$devicedir/Backups/$backupname"
+      echo ""
+      read -p "Press [Enter] To return to the main menu." null
+      f_twrptools;;
+    6)
+      clear
+      ls $devicedir/backups/$serialno
+      echo ""
+      echo "Enter the name of the backup that you want to restore."
+      echo ""
+      read -p "Backup: " backupname
+      if [ -d $devicedir/backups/$serialno/$backupname ]; then
+        clear
+      else
+        clear
+        echo "That backup doesn't exist! Returning to main menu."
+        sleep 3
+        f_twrptools
+      fi
+
+      clear
+      echo "What partitions do you want to restore from the backup? Type any that apply."
+      echo ""
+      echo "S = System"
+      echo "D = Data"
+      echo "C = Cache"
+      echo "R = Recovery"
+      echo "B = Boot"
+      echo "A = Android secure"
+      echo "E = SD-Ext"
+      echo ""
+      read -p "Back up: " partitions
+      clear
+      partitions=$(echo $partitions | tr 'a-z' 'A-Z')
+      partitions=$(echo $partitions | tr -d ' ')
+
+      $adb reboot recovery
+      sleep 20
+
+      clear
+      echo "Pushing backup to device."
+      echo ""
+      $adb shell "echo -e 'restore $backupname $partitions\nreboot recovery\n' > /cache/recovery/openrecoveryscript"
+      $adb push $devicedir/backups/$serialno/$backupname /sdcard/TWRP/BACKUPS/$serialno/$backupname
+      $adb reboot recovery
+      clear
+      read -p "Press [Enter] when the restore is complete and the device is back in recovery." null
+      clear
+      $adb shell rm -rf /sdcard/TWRP/BACKUPS/$serialno/$backupname
+      $adb reboot
+      clear
+      echo "Restore complete."
+      echo ""
+      read -p "Press [Enter] to return to the main menu."
+      clear
+      f_twrptools;;
+    M|m) f_menu;;
     Q|q) clear; exit;;
   esac
 }
@@ -809,6 +826,7 @@ f_options(){
   echo "Android Version: $androidver ($androidbuild)"
   echo ""
   echo "[1] Update Nexus Multitool"
+  echo "[2] Delete All Nexus Multitool Files and Exit"
   echo ""
   echo "[R] Return to previous menu"
   echo "[Q] Quit"
@@ -817,6 +835,7 @@ f_options(){
 
   case $selection in
     1) f_update; f_options;;
+    2) f_delete; exit;;
     R|r) f_menu;;
     Q|q) clear ; exit;;
     *) f_options;;
@@ -844,7 +863,35 @@ f_update(){
   esac
 }
 
+##################################### Delete files ###
+f_delete(){
+  clear
+  echo "Are you sure you would like to delete all Nexus Multitool files?"
+  echo ""
+  echo "[Y] Yes, delete all of the files."
+  echo "[N] No, bring me back to the main menu."
+  echo ""
+  read -p "Selection: " selection
+
+  case $selection in
+    Y|y)
+      clear
+      echo "Deleting all files."
+      rm -rf $maindir
+      sleep 2
+      clear
+      echo "Files deleted."
+      echo ""
+      read -p "Press [Enter] to exit the script." null
+      clear
+      exit;;
+    N|n)
+      f_menu;;
+    *)
+      f_delete;;
+  esac
+}
 
 ################## What actually starts the script ###
 f_setup
-f_autodevice
+f_menu
