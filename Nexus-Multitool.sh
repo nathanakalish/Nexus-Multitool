@@ -323,7 +323,7 @@ f_root(){
       $adb reboot recovery
       sleep 15
       $adb push $devicedir/flashable-root.zip /sdcard/tmp/root.zip
-      $adb shell "echo -e 'install /sdcard/tmp/root.zip\nreboot\n' > /cache/recovery/openrecoveryscript"
+      $adb shell "echo -e 'install /sdcard/tmp/root.zip\ncmd rm -rf /sdcard/tmp\nreboot\n' > /cache/recovery/openrecoveryscript"
       clear
       $adb reboot recovery
       echo "Your device is now being rooted! Give it a minute to finish, and it will reboot itself."
@@ -544,7 +544,7 @@ f_customrom(){
   $adb push $devicedir/$romselection-ROM.zip /sdcard/tmp/rom.zip
   $adb push $commondir/gapps/$gappstype-GApps.zip /sdcard/tmp/gapps.zip
   $adb push $commondir/root.zip /sdcard/tmp/root.zip
-  $adb shell "echo -e 'install /sdcard/tmp/rom.zip\ninstall /sdcard/tmp/gapps.zip\ninstall /sdcard/tmp/root.zip\nwipe cache\nwipe data\nreboot\n' > /cache/recovery/openrecoveryscript"
+  $adb shell "echo -e 'install /sdcard/tmp/rom.zip\ninstall /sdcard/tmp/gapps.zip\ninstall /sdcard/tmp/root.zip\nwipe cache\nwipe data\ncmd rm -rf /sdcard/tmp\nreboot\n' > /cache/recovery/openrecoveryscript"
   $adb reboot recovery
   clear
   echo "The device is now rebooting. Give it time to flash the new ROM. It will boot on its own."
