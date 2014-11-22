@@ -60,7 +60,7 @@ class LatestRomUtil:
       getUrl = self.__getPage("http://download.chainfire.eu/290/CF-Root/CF-Auto-Root/CF-Auto-Root-manta-mantaray-nexus10.zip", True)
     elif currentdevice == "volantis":
       getUrl = self.__getPage("http://download.chainfire.eu/595/CF-Root/CF-Auto-Root/CF-Auto-Root-flounder-volantis-nexus9.zip", True)
-  elif currentdevice == "supersu":
+    elif currentdevice == "supersu":
       getUrl = self.__getPage("http://download.chainfire.eu/supersu", True)
     else:
       exit()
