@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #Version
-nmtver="0.9 Beta"
+nmtver="0.10 Beta"
 
 ################## Sets up ADB and and directories ###
 f_setup(){
@@ -184,7 +184,7 @@ f_menu(){
       echo ""
       read -p "Press [Enter] to continue." null
       clear
-      f_autodevice;;
+      f_menu;;
     Q|q) clear; exit;;
     *) f_menu;;
   esac
@@ -275,7 +275,7 @@ f_root(){
       echo "Downloading files to root device."
       cd $devicedir
       export currentdevice
-      $wget -O $scriptdir/autoroot-download.py 'https://raw.githubusercontent.com/photonicgeek/Nexus-Multitool/master/autoroot-download.py'
+      $wget -O $scriptdir/autoroot-download.py 'https://raw.githubusercontent.com/photonicgeek/Nexus-Multitool/master/autoroot-download.py' --progress=bar:force 2>&1 | wgetprogress
       clear
       echo "Downloading CFAutoroot to root device."
       python $scriptdir/autoroot-download.py
@@ -305,7 +305,7 @@ f_root(){
         volantis) $fastboot boot $devicedir/root/image/CF-Auto-Root-flounder-volantis-nexus7.img;;
       esac
       clear
-      echo "Your device is now rooted! You will, however, need to reinstall a custom kernel."
+      echo "Your device is now rooted! Give it a minute to complete the process."
       echo ""
       read -p "Press [Enter] to return to the main menu." null
       rm -rf $devicedir/root;;
@@ -314,7 +314,7 @@ f_root(){
       echo "Downloading files needed for root."
       cd $devicedir
       export currentdevice
-      $wget -O $scriptdir/autoroot-download.py 'https://raw.githubusercontent.com/photonicgeek/Nexus-Multitool/master/autoroot-download.py'
+      $wget -O $scriptdir/autoroot-download.py 'https://raw.githubusercontent.com/photonicgeek/Nexus-Multitool/master/autoroot-download.py' --progress=bar:force 2>&1 | wgetprogress
       python $scriptdir/autoroot-download.py
       clear
       echo "Download complete."
@@ -368,7 +368,7 @@ f_twrp(){
       f_menu;;
   esac
   echo "Downloading TWRP"
-  $wget -O $devicedir/$currentdevice-twrp.img $url
+  $wget -O $devicedir/$currentdevice-twrp.img $url --progress=bar:force 2>&1 | wgetprogress
   clear
   echo "Rebooting into the bootloader."
   $adb reboot bootloader
@@ -510,13 +510,13 @@ f_customrom(){
 
   clear
   echo "Downloading ROM."
-  $wget -O $devicedir/$romselection-ROM.zip $romurl
+  $wget -O $devicedir/$romselection-ROM.zip $romurl --progress=bar:force 2>&1 | wgetprogress
   clear
   echo "Downloaded ROM."
 
   clear
   echo "Downloading GApps."
-  $wget -O $commondir/gapps/$gappstype-GApps.zip $gappsurl
+  $wget -O $commondir/gapps/$gappstype-GApps.zip $gappsurl --progress=bar:force 2>&1 | wgetprogress
   clear
   echo "Downloaded GApps."
 
@@ -525,7 +525,7 @@ f_customrom(){
   currentdevicetmp=$currentdevice
   currentdevice="supersu"
   export currentdevice
-  $wget -O $scriptdir/autoroot-download.py 'https://raw.githubusercontent.com/photonicgeek/Nexus-Multitool/master/autoroot-download.py'
+  $wget -O $scriptdir/autoroot-download.py 'https://raw.githubusercontent.com/photonicgeek/Nexus-Multitool/master/autoroot-download.py' --progress=bar:force 2>&1 | wgetprogress
   cd $commondir
   clear
   python $scriptdir/autoroot-download.py
@@ -772,7 +772,7 @@ f_restore(){
   esac
 
   echo "Downloading restore image."
-  $wget -O $devicedir/restore.tgz $url
+  $wget -O $devicedir/restore.tgz $url --progress=bar:force 2>&1 | wgetprogress
   clear
   cd $devicedir
   echo "Unpacking restore image."
@@ -858,8 +858,11 @@ f_tools(){
   echo "[2] Push File to Device"
   echo "[3] Install APK"
   echo "[4] Start ADB Shell"
-  echo "[5] Back Up device and copy to computer (Requires TWRP)"
-  echo "[6] Restore device from backup on computer (Requires TWRP)"
+  echo "[5] Back Up device and copy to computer       (Requires TWRP)"
+  echo "[6] Restore device from backup on computer    (Requires TWRP)"
+  if [ "$currentdevice" == "volantis" ]||[ "$currentdevice" == "shamu" ]; then
+    echo "[7] Decrypt Device                            (Requires TWRP)"
+  fi
   echo ""
   echo "[M] Return to Previous Menu"
   echo "[Q] Quit"
@@ -1006,6 +1009,45 @@ f_tools(){
       read -p "Press [Enter] to return to the main menu."
       clear
       f_twrptools;;
+    7)
+      clear
+      echo "This utility will decrypt your device to make it run faster. It factory resets the device."
+      echo "Make sure any data you want to keep is backed up!"
+      echo ""
+      echo "[Y]es, erase everything and decrypt the device."
+      echo "[N]o, I want to keep it encrypted and return to the menu."
+      echo ""
+      read -p "Selection: " selection
+
+      case $selection in
+        Y|y) clear; echo "Continuing with erase and decrypt.";;
+        N|n) f_menu;;
+      esac
+
+      case $currentdevice in
+        volantis) url="https://github.com/photonicgeek/Nexus-Multitool/raw/master/Files/Devices/volantis/boot_noforceencrypt.img";;
+        shamu) url="https://github.com/photonicgeek/Nexus-Multitool/raw/master/Files/Devices/shamu/boot_noforceencrypt.img";;
+      esac
+
+      clear
+      echo "Downloading patched kernel."
+      $wget -O $devicedir/noencrypt-boot.img $url --progress=bar:force 2>&1 | wgetprogress
+
+      clear
+      echo "Wiping device and patching kernel. It will reboot several times."
+      $adb reboot bootloader
+      $fastboot flash boot $devicedir/noencrypt-boot.img
+      $fastboot reboot
+      $adb wait-for-device
+      $adb reboot recovery
+      sleep 10
+      $adb shell "echo -e 'wipe data\nwipe cache\nreboot\n' > /cache/recovery/openrecoveryscript"
+      $adb reboot recovery
+      clear
+      echo "Your device is now decrypted!"
+      echo ""
+      read -p "Press [Enter] to return to the main menu."
+      f_menu;;
     M|m) f_menu;;
     Q|q) clear; exit;;
   esac
@@ -1041,7 +1083,7 @@ f_update(){
   case $unamestr in
   Darwin)
     self=$BASH_SOURCE
-    $wget -O /tmp/Nexus-Multitool.sh 'https://raw.githubusercontent.com/photonicgeek/Nexus-Multitool/master/Nexus-Multitool.sh'
+    $wget -O /tmp/Nexus-Multitool.sh 'https://raw.githubusercontent.com/photonicgeek/Nexus-Multitool/master/Nexus-Multitool.sh' --progress=bar:force 2>&1 | wgetprogress
     clear
     rm -rf $self
     mv /tmp/Nexus-Multitool.sh $self
@@ -1050,7 +1092,7 @@ f_update(){
     exec $self;;
   *)
     self=$(readlink -f $0)
-    $wget -O $self 'https://raw.githubusercontent.com/photonicgeek/Nexus-Multitool/master/Nexus-Multitool.sh'
+    $wget -O $self 'https://raw.githubusercontent.com/photonicgeek/Nexus-Multitool/master/Nexus-Multitool.sh' --progress=bar:force 2>&1 | wgetprogress
     clear
     exec $self;;
   esac
@@ -1085,6 +1127,34 @@ f_delete(){
   esac
 }
 
+
+
+######################## INTERNAL SCRIPT UTILITIES ###
+f_internal(){
+  wgetprogress (){
+    local flag=false c count cr=$'\r' nl=$'\n'
+    while IFS='' read -d '' -rn 1 c
+    do
+      if $flag
+        then
+        printf '%c' "$c"
+      else
+        if [[ $c != $cr && $c != $nl ]]
+          then
+          count=0
+        else
+          ((count++))
+          if ((count > 1))
+            then
+            flag=true
+          fi
+        fi
+      fi
+    done
+  }
+}
+
 ################## What actually starts the script ###
+f_internal
 f_setup
 f_menu
