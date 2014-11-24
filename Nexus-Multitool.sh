@@ -15,6 +15,7 @@ f_setup(){
   cd $maindir
   case $unamestr in
   Darwin)
+    xcode-select --install
     if [ -d $commondir/tools ]; then
       clear
     else
@@ -152,8 +153,7 @@ f_menu(){
   clear
   echo "Nexus Multitool - Version $nmtver"
   echo "Connected Device: $devicemake $devicemodel ($currentdevice) ($serialno)"
-  echo "Android Version: $androidver ($androidbuild) $rootedrom"
-  echo "TWRP Recovery: $twrprecovery"
+  echo "Android Version: $androidver ($androidbuild)"
   echo ""
   echo "[1] Unlock / Lock Bootloader"
   echo "[2] Root                       (Requires Unlocked Bootloader)"
