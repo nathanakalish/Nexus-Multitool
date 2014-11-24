@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #Version
-nmtver="0.10 Beta"
+nmtver="0.11 Beta"
 
 ################## Sets up ADB and and directories ###
 f_setup(){
