@@ -172,8 +172,8 @@ f_menu(){
   echo "Android Version: $androidver ($androidbuild)"
   echo ""
   echo "[1] Unlock / Lock Bootloader (All options below require it!)"
-  echo "[2] Root"
-  echo "[3] Install TWRP Recovery"
+  echo "[2] Install TWRP Recovery"
+  echo "[3] Root"
   echo "[4] Install custom ROM"
   echo "[5] Flash Custom Files"
   echo "[6] Restore to Stock"
@@ -187,8 +187,8 @@ f_menu(){
 
   case $menuselection in
     1) f_unlocklock; f_menu;;
-    2) f_root; f_menu;;
-    3) f_twrp; f_menu;;
+    2) f_twrp; f_menu;;
+    3) f_root; f_menu;;
     4) f_customrom; f_menu;;
     5) f_flash; f_menu;;
     6) f_restore; f_menu;;
