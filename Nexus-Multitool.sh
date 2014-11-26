@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #Version
-nmtver="0.11 Beta"
+nmtver="0.12 Beta"
 
 ################## Sets up ADB and and directories ###
 f_setup(){
@@ -9,6 +9,7 @@ f_setup(){
   maindir=~/Nexus-Multitool
   commondir=$maindir/all
   mkdir -p $commondir
+  mkdir -p $commondir/gapps
   clear
 
   unamestr=`uname`
@@ -46,9 +47,9 @@ f_setup(){
     if [ -d $commondir/tools ]; then
       clear
     else
-      echo "Installing wget (Password may be required)"
+      echo "Installing wget and git (Password may be required)"
       echo ""
-      sudo apt-get -qq update && sudo apt-get -qq -y install wget
+      sudo apt-get -qq update && sudo apt-get -qq -y install wget git
       clear
       echo "Downloading ADB and Fastboot (Developer Tools required)"
       echo ""
@@ -130,11 +131,26 @@ f_autodevice(){
   fi
 
   clear
+  if [ $currentdevice == "omni_flo" ]; then
+    currentdevice=razor
+  elif [ $currentdevice == "omni_deb" ]; then
+    currentdevice=razorg
+  elif [ $currentdevice == "omni_grouper" ]; then
+    currentdevice=nakasi
+  elif [ $currentdevice == "omni_tilapia" ]; then
+    currentdevice=nakasig
+  elif [ $currentdevice == "omni_mako" ]; then
+    currentdevice=occam
+  elif [ $currentdevice == "omni_manta" ]; then
+    currentdevice=mantaray
+  fi
+
   case $currentdevice in
     sojus|sojuk|sojua|soju|mysidspr|mysid|yakju|takju|occam|hammerhead|shamu|nakasi|nakasig|razor|razorg|mantaray|volantis|tungsten|fugu)
       clear;;
     *)
-      echo "This is not a Nexus device. This utility only supports Nexus devices."
+      echo "This is not a Nexus device and is being recognized as a '$currentdevice'."
+      echo "This utility only supports Nexus devices. If this is an error, please report it!"
       echo ""
       read -p "Press [Enter] to exit the script."
       clear
@@ -155,12 +171,12 @@ f_menu(){
   echo "Connected Device: $devicemake $devicemodel ($currentdevice) ($serialno)"
   echo "Android Version: $androidver ($androidbuild)"
   echo ""
-  echo "[1] Unlock / Lock Bootloader"
-  echo "[2] Root                       (Requires Unlocked Bootloader)"
-  echo "[3] Install TWRP Recovery      (Requires Unlocked Bootloader)"
-  echo "[4] Install custom ROM         (Requires Unlocked Bootloader + TWRP)"
-  echo "[5] Flash Custom Files         (Requires Unlocked Bootloader)"
-  echo "[6] Restore to Stock           (Requires Unlocked Bootloader)"
+  echo "[1] Unlock / Lock Bootloader (All options below require it!)"
+  echo "[2] Root"
+  echo "[3] Install TWRP Recovery"
+  echo "[4] Install custom ROM"
+  echo "[5] Flash Custom Files"
+  echo "[6] Restore to Stock"
   echo "[7] Tools"
   echo ""
   echo "[S] Settings and Options."
@@ -351,13 +367,13 @@ f_twrp(){
     mysid) url="http://techerrata.com/get/twrp2/toro/openrecovery-twrp-2.8.1.0-toro.img";;
     yakju) url="http://techerrata.com/get/twrp2/maguro/openrecovery-twrp-2.8.1.0-maguro.img";;
     takju) url="http://techerrata.com/get/twrp2/maguro/openrecovery-twrp-2.8.1.0-maguro.img";;
-    occam) url="http://techerrata.com/get/twrp2/mako/openrecovery-twrp-2.8.1.0-mako.img";;
+    occam) url="http://techerrata.com/get/twrp2/mako/openrecovery-twrp-2.8.2.0-mako.img";;
     shamu) url="http://techerrata.com/get/twrp2/shamu/openrecovery-twrp-2.8.2.0-shamu.img";;
-    hammerhead) url="http://techerrata.com/get/twrp2/hammerhead/openrecovery-twrp-2.8.1.0-hammerhead.img";;
-    nakasi) url="http://techerrata.com/get/twrp2/grouper/openrecovery-twrp-2.8.1.0-grouper.img";;
-    nakasig) url="http://techerrata.com/get/twrp2/tilapia/openrecovery-twrp-2.8.1.0-tilapia.img";;
-    razor) url="http://techerrata.com/get/twrp2/flo/openrecovery-twrp-2.8.1.0-flo.img";;
-    razorg) url="http://techerrata.com/get/twrp2/deb/openrecovery-twrp-2.8.1.0-deb.img";;
+    hammerhead) url="http://techerrata.com/get/twrp2/hammerhead/openrecovery-twrp-2.8.2.0-hammerhead.img";;
+    nakasi) url="http://techerrata.com/get/twrp2/grouper/openrecovery-twrp-2.8.2.0-grouper.img";;
+    nakasig) url="http://techerrata.com/get/twrp2/tilapia/openrecovery-twrp-2.8.2.0-tilapia.img";;
+    razor) url="http://techerrata.com/get/twrp2/flo/openrecovery-twrp-2.8.2.0-flo.img";;
+    razorg) url="http://techerrata.com/get/twrp2/deb/openrecovery-twrp-2.8.2.0-deb.img";;
     mantaray) url="http://techerrata.com/get/twrp2/manta/openrecovery-twrp-2.8.1.0-manta.img";;
     volantis) url="http://techerrata.com/get/twrp2/volantis/openrecovery-twrp-2.8.2.1-volantis.img";;
     *)
@@ -454,6 +470,20 @@ f_customrom(){
     Q|q) clear; exit;;
   esac
 
+  clear
+  echo "Would you like the ROM rooted?"
+  echo ""
+  echo "[Y] Yes, root the ROM."
+  echo "[N] No, don't root."
+  echo ""
+  read -p "Selection: " selection
+
+  case $selection in
+    Y|y) rootrom=1;;
+    N|n) rootrom=0;;
+  esac
+
+  clear
   currentday=`date +%d`
   ndays="1"
   day=`expr $currentday - $ndays`
@@ -520,31 +550,53 @@ f_customrom(){
   clear
   echo "Downloaded GApps."
 
-  clear
-  echo "Downloading SuperSU."
-  currentdevicetmp=$currentdevice
-  currentdevice="supersu"
-  export currentdevice
-  $wget -O $scriptdir/autoroot-download.py 'https://raw.githubusercontent.com/photonicgeek/Nexus-Multitool/master/autoroot-download.py' --progress=bar:force 2>&1 | wgetprogress
-  cd $commondir
-  clear
-  python $scriptdir/autoroot-download.py
-  clear
-  cd ~/
-  currentdevice=$currentdevicetmp
-  clear
-  echo "Downloaded SuperSU."
+  case $rootrom in
+    1)
+      clear
+      echo "Downloading SuperSU."
+      currentdevicetmp=$currentdevice
+      currentdevice="supersu"
+      export currentdevice
+      $wget -O $scriptdir/autoroot-download.py 'https://raw.githubusercontent.com/photonicgeek/Nexus-Multitool/master/autoroot-download.py' --progress=bar:force 2>&1 | wgetprogress
+      cd $commondir
+      clear
+      echo "Downloading SuperSU."
+      python $scriptdir/autoroot-download.py
+      clear
+      cd ~/
+      currentdevice=$currentdevicetmp
+      clear
+      echo "Downloaded SuperSU.";;
+    *) clear;;
+  esac
 
   sleep 3
 
   clear
   echo "Please wait while the ROM is being installed."
   $adb reboot recovery
-  sleep 20
-  $adb push $devicedir/$romselection-ROM.zip /sdcard/tmp/rom.zip
-  $adb push $commondir/gapps/$gappstype-GApps.zip /sdcard/tmp/gapps.zip
-  $adb push $commondir/root.zip /sdcard/tmp/root.zip
-  $adb shell "echo -e 'install /sdcard/tmp/rom.zip\ninstall /sdcard/tmp/gapps.zip\ninstall /sdcard/tmp/root.zip\nwipe cache\nwipe data\ncmd rm -rf /sdcard/tmp\nreboot\n' > /cache/recovery/openrecoveryscript"
+  sleep 30
+  clear
+  echo "Transferring files."
+  case $rootrom in
+    1)
+      $adb push $devicedir/$romselection-ROM.zip /sdcard/tmp/rom.zip
+      $adb push $commondir/gapps/$gappstype-GApps.zip /sdcard/tmp/gapps.zip
+      $adb push $commondir/root.zip /sdcard/tmp/root.zip
+      $adb shell "echo -e 'wipe cache\nwipe data\ninstall /sdcard/tmp/rom.zip\ninstall /sdcard/tmp/gapps.zip\ninstall /sdcard/tmp/root.zip\ncmd rm -rf /sdcard/tmp\nreboot\n' > /cache/recovery/openrecoveryscript";;
+    *)
+      $adb push $devicedir/$romselection-ROM.zip /sdcard/tmp/rom.zip
+      $adb push $commondir/gapps/$gappstype-GApps.zip /sdcard/tmp/gapps.zip
+      $adb shell "echo -e 'wipe cache\nwipe data\ninstall /sdcard/tmp/rom.zip\ninstall /sdcard/tmp/gapps.zip\ncmd rm -rf /sdcard/tmp\nreboot\n' > /cache/recovery/openrecoveryscript";;
+  esac
+  gappsinstall=0
+  rootrom=0
+
+  #$adb reboot bootloader
+  #sleep 15
+  #$fastboot erase data
+  #$fastboot erase cache
+
   $adb reboot recovery
   clear
   echo "The device is now rebooting. Give it time to flash the new ROM. It will boot on its own."
@@ -861,7 +913,7 @@ f_tools(){
   echo "[5] Back Up device and copy to computer       (Requires TWRP)"
   echo "[6] Restore device from backup on computer    (Requires TWRP)"
   if [ "$currentdevice" == "volantis" ]||[ "$currentdevice" == "shamu" ]; then
-    echo "[7] Decrypt Device                            (Requires TWRP)"
+    echo "[7] Decrypt Device"
   fi
   echo ""
   echo "[M] Return to Previous Menu"
@@ -1037,12 +1089,9 @@ f_tools(){
       echo "Wiping device and patching kernel. It will reboot several times."
       $adb reboot bootloader
       $fastboot flash boot $devicedir/noencrypt-boot.img
+      $fastboot erase data
+      $fastboot erase cache
       $fastboot reboot
-      $adb wait-for-device
-      $adb reboot recovery
-      sleep 10
-      $adb shell "echo -e 'wipe data\nwipe cache\nreboot\n' > /cache/recovery/openrecoveryscript"
-      $adb reboot recovery
       clear
       echo "Your device is now decrypted!"
       echo ""
