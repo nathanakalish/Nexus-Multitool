@@ -282,19 +282,49 @@ f_unlocklock(){
   esac
 }
 
+declare -A deviceMap=(
+  [mysidspr]="293:toroplus:galaxynexus"
+  [mysid]="92:toro:galaxynexus"
+  [yakju]="296:maguro:galaxynexus"
+  [takju]="291:maguro:galaxynexus"
+  [occam]="297:mako:nexus4"
+  [shamu]="628:shamu:nexus6"
+  [hammerhead]="363:hammerhead:nexus5"
+  [nakasi]="295:grouper:nexus7"
+  [nakasig]="294:tilapia:nexus7"
+  [razor]="37:flo:nexus7"
+  [razorg]="361:deb:nexus7"
+  [mantaray]="290:manta:nexus10"
+  [volantis]="595:flounder:nexus9"
+)
+
+f_download(){
+  local outfile=$1
+  local location=$2
+
+  if [ -z "$location" ];
+  then
+    set -- $(echo ${deviceMap[$currentdevice]} | tr ":" "\n")
+    location="http://download.chainfire.eu/$1/CF-Root/CF-Auto-Root/CF-Auto-Root-$2-$currentdevice-$3.zip"
+  fi
+
+  local url=$($wget -SO- $location 2>&1 | awk '/Location/{print $2; exit;}')
+
+  if [ -z "$url" ]; then
+    url=$location
+  fi
+
+  $wget -O "$outfile" "$url?retrieve_file=1"
+}
+
 ################################# Roots the device ###
 f_root(){
   clear
   case $currentdevice in
     mysidspr|mysid|yakju|takju|occam|shamu|hammerhead|nakasi|nakasig|razor|razorg|mantaray|volantis)
       clear
-      echo "Downloading files to root device."
-      cd $devicedir
-      export currentdevice
-      $wget -O $scriptdir/autoroot-download.py 'https://raw.githubusercontent.com/photonicgeek/Nexus-Multitool/master/autoroot-download.py' --progress=bar:force 2>&1 | wgetprogress
-      clear
       echo "Downloading CFAutoroot to root device."
-      python $scriptdir/autoroot-download.py
+      f_download "$devicedir/root.zip"
       clear
       echo "Download Complete."
       sleep 1
@@ -328,10 +358,7 @@ f_root(){
     sojus|sojuk|sojua|soju)
       clear
       echo "Downloading files needed for root."
-      cd $devicedir
-      export currentdevice
-      $wget -O $scriptdir/autoroot-download.py 'https://raw.githubusercontent.com/photonicgeek/Nexus-Multitool/master/autoroot-download.py' --progress=bar:force 2>&1 | wgetprogress
-      python $scriptdir/autoroot-download.py
+      f_download "$devicedir/flashable-root.zip" "http://download.chainfire.eu/supersu"
       clear
       echo "Download complete."
       sleep 1
@@ -554,17 +581,7 @@ f_customrom(){
     1)
       clear
       echo "Downloading SuperSU."
-      currentdevicetmp=$currentdevice
-      currentdevice="supersu"
-      export currentdevice
-      $wget -O $scriptdir/autoroot-download.py 'https://raw.githubusercontent.com/photonicgeek/Nexus-Multitool/master/autoroot-download.py' --progress=bar:force 2>&1 | wgetprogress
-      cd $commondir
-      clear
-      echo "Downloading SuperSU."
-      python $scriptdir/autoroot-download.py
-      clear
-      cd ~/
-      currentdevice=$currentdevicetmp
+      f_download "$commondir/root.zip" "http://download.chainfire.eu/supersu"
       clear
       echo "Downloaded SuperSU.";;
     *) clear;;
